@@ -18,6 +18,7 @@ var shake := 1.0
 var player_name := ""
 var last_join := ""
 var token := ""
+var _window_applied := ""
 
 
 static func load_or_default(path := PATH) -> Settings:
@@ -45,14 +46,24 @@ func save(path := PATH) -> int:
 	return cf.save(path)
 
 
+func window_key() -> String:
+	return "%s:%d" % [fullscreen, resolution]
+
+
+## Chế độ cửa sổ / độ phân giải đã đổi so với lần áp dụng trước (kéo thanh âm lượng không đụng tới cửa sổ).
+func window_changed() -> bool:
+	return window_key() != _window_applied
+
+
 ## Áp dụng âm lượng và cửa sổ.
 func apply(audio: GameAudio) -> void:
 	audio.set_volume("Master", master)
 	audio.set_volume("Music", music)
 	audio.set_volume("SFX", sfx)
 	audio.set_volume("Voice", voice)
-	if DisplayServer.get_name() == "headless":
+	if DisplayServer.get_name() == "headless" or not window_changed():
 		return
+	_window_applied = window_key()
 	if fullscreen:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	else:

@@ -88,9 +88,11 @@ func tick(dt: float) -> void:
 		var dist := Vector2(p.x, p.z).distance_to(fire_c)
 		if dist > fire_r - 0.35:
 			s.scared = true
-		if dist > fire_r + 0.05 and s.ground:
+		# đếm cả lúc đang nhảy ngoài vùng (nhảy liên tục không né được lửa); chỉ bốc cháy khi chạm sàn,
+		# và chỉ đặt lại khi đã về trong vùng an toàn
+		if dist > fire_r + 0.05:
 			s.outside_t += dt
-			if s.outside_t > 0.3:
+			if s.outside_t > 0.3 and s.ground:
 				m.kill(s, "fry")
 				m.announce("ĐỐI TƯỢNG %s: ĐÃ CHÍN." % m.subj_label(s))
 		else:

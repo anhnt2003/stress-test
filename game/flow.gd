@@ -42,6 +42,7 @@ func setup(a: Node) -> void:
 	net.status_changed.connect(_on_net_status)
 	net.left.connect(_on_net_left)
 	net.remote_look.connect(change_look)
+	net.joined.connect(_on_net_joined)
 
 
 func boot(cli: Dictionary) -> void:
@@ -83,7 +84,8 @@ func show_menu() -> void:
 func enter_lobby() -> void:
 	paused = false
 	menus.hide_all()
-	if m.state != MatchManager.ST_LOBBY:
+	# lúc mới khởi động MatchManager đã ở ST_LOBBY nhưng chưa nạp sảnh (door == null)
+	if m.door == null or m.state != MatchManager.ST_LOBBY:
 		m.load_lobby()
 	presenter.lobby.set_room(net.room_text() if net.is_host() else "")
 
@@ -177,7 +179,7 @@ func _on_look(kind: String, dev: int, dh: int, dc: int) -> void:
 
 func change_look(i: int, dh: int, dc: int) -> void:
 	m.seats.cycle_look(i, dh, dc)
-	if m.state == MatchManager.ST_LOBBY and m.door.has_method("refresh_look"):
+	if m.state == MatchManager.ST_LOBBY and m.door and m.door.has_method("refresh_look"):
 		m.door.refresh_look(i)
 	app.audio.sfx("beep", -10.0, 1.4)
 	net.broadcast_lobby()
@@ -267,13 +269,16 @@ func join(address: String, player_name: String) -> void:
 func _on_net_status(text: String) -> void:
 	if menus.join_dialog.visible:
 		menus.join_dialog.set_status(text)
-	if net.is_client() and net.connected:
-		menus.hide_all()
-		paused = false
-		presenter.lobby.set_room("ĐÃ VÀO PHÒNG  ·  MÁY CHỦ SẼ BẮT ĐẦU TRẬN  ·  ESC: RỜI PHÒNG")
-	elif net.is_host():
+	if net.is_host():
 		presenter.lobby.set_room(net.room_text())
 	presenter.hud.say(text, 3.0)
+
+
+## Máy khách vừa được máy chủ nhận vào phòng (chỉ một lần mỗi lần vào).
+func _on_net_joined() -> void:
+	menus.hide_all()
+	paused = false
+	presenter.lobby.set_room("ĐÃ VÀO PHÒNG  ·  MÁY CHỦ SẼ BẮT ĐẦU TRẬN  ·  ESC: RỜI PHÒNG")
 
 
 func _on_net_left(reason: String) -> void:

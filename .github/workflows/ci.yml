@@ -22,7 +22,8 @@ jobs:
       - name: Import tài nguyên + kiểm tra cú pháp mọi script
         run: |
           godot --headless --path . --import 2>&1 | tee import.log
-          ! grep -q "SCRIPT ERROR" import.log
+          # `! grep` không làm bash -e dừng nếu không phải lệnh cuối, nên kiểm tra bằng if
+          if grep -q "SCRIPT ERROR" import.log; then echo "::error::Có lỗi script khi import"; exit 1; fi
 
       - name: Kiểm thử (tính điểm, ghế, cài đặt, Cỗ Máy, 10 cửa, mạng)
         run: godot --headless --path . --script res://tests/run_all.gd
@@ -30,7 +31,7 @@ jobs:
       - name: Chạy thử cả trận 10 cửa (bot, có chơi xấu)
         run: |
           godot --headless --fixed-fps 60 --path . -- --shot=/tmp/none.png --match --phase=400 2>&1 | tee match.log
-          ! grep -q "SCRIPT ERROR" match.log
+          if grep -q "SCRIPT ERROR" match.log; then echo "::error::Có lỗi script trong trận mô phỏng"; exit 1; fi
           grep -q "RESULT door=10" match.log
           grep -q "FINAL totals=" match.log
 
@@ -41,4 +42,4 @@ jobs:
           godot --headless --path . -- --join=127.0.0.1 --name=ci --net-test --net-lag=100 --quit-after=25 2>&1 | tee client.log
           wait
           grep -q "NETTEST OK" client.log
-          ! grep -q "SCRIPT ERROR" host.log client.log
+          if grep -q "SCRIPT ERROR" host.log client.log; then echo "::error::Có lỗi script khi chơi qua mạng"; exit 1; fi

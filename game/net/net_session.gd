@@ -19,6 +19,8 @@ const ACTIONS := ["jump", "shove", "sabotage"]
 
 signal status_changed(text: String)
 signal left(reason: String)
+## Máy khách vừa được máy chủ nhận vào phòng.
+signal joined
 ## Máy chủ: người chơi mạng ở ghế `seat` muốn đổi mũ / màu áo.
 signal remote_look(seat: int, dh: int, dc: int)
 
@@ -140,6 +142,13 @@ func join(address: String, nm: String, match_: MatchManager, s: Settings) -> int
 	mode = "client"
 	connected = false
 	my_seat = -1
+	# máy chủ tạo NetSource mới với bộ đếm 0: bộ đếm phía này cũng phải về 0, không thì gói đầu bị coi là bấm nút
+	_counts = [0, 0, 0]
+	_input_acc = 0.0
+	_test = {}
+	snaps_received = 0
+	loads_received = 0
+	kills_received = 0
 	m.remote = true
 	_local = [KeyboardSource.new(1), KeyboardSource.new(2)]
 	for d in 4:
@@ -195,10 +204,20 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 	if protocol != PROTOCOL:
 		rpc_id(id, "s_reject", "MÁY CHỦ CHẠY PHIÊN BẢN KHÁC (%s)." % PROTOCOL)
 		return
-	var seat := assign_seat(m.seats, dropped, token)
+	if peers.has(id):
+		rpc_id(id, "s_welcome", int(peers[id].seat))   # chào lại: không cấp thêm ghế
+		return
+	var plan := plan_seat(m.seats, peers, dropped, token)
+	var seat := int(plan.seat)
 	if seat < 0:
 		rpc_id(id, "s_reject", "PHÒNG ĐÃ ĐỦ 4 NGƯỜI.")
 		return
+	var old := int(plan.takeover)
+	if old != 0:
+		# cùng máy vào lại trước khi máy chủ nhận ra kết nối cũ đã chết: tiếp quản ghế, ngắt kết nối cũ
+		peers.erase(old)
+		if peer:
+			peer.disconnect_peer(old)
 	var clean := nm.strip_edges().substr(0, 16).to_upper()
 	if clean == "":
 		clean = "KHÁCH %d" % (seat + 1)
@@ -224,7 +243,17 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 	status_changed.emit("%s ĐÃ VÀO PHÒNG (ĐỐI TƯỢNG %s)." % [clean, m.seats.looks[seat].label])
 
 
-## Chọn ghế cho người vừa vào: ghế cũ nếu đang chờ vào lại (và vẫn do bot ngồi), không thì ghế bot đầu tiên.
+## Chọn ghế cho người vừa vào. Trả về {"seat": ghế (-1 nếu đầy), "takeover": peer cũ cần ngắt (0 nếu không)}.
+## Thứ tự: ghế của kết nối cũ cùng token (chưa bị phát hiện mất) → ghế cũ đang chờ vào lại → ghế bot đầu tiên.
+static func plan_seat(seats: Seats, peers_: Dictionary, dropped_: Dictionary, token: String) -> Dictionary:
+	if token != "":
+		for pid in peers_:
+			if String(peers_[pid].token) == token:
+				return {"seat": int(peers_[pid].seat), "takeover": int(pid)}
+	return {"seat": assign_seat(seats, dropped_, token), "takeover": 0}
+
+
+## Ghế cũ nếu đang chờ vào lại (và vẫn do bot ngồi), không thì ghế bot đầu tiên.
 static func assign_seat(seats: Seats, dropped_: Dictionary, token: String) -> int:
 	if dropped_.has(token):
 		var old := int(dropped_[token])
@@ -308,7 +337,7 @@ static func pack_flags(s: Subject) -> int:
 func snapshot() -> Dictionary:
 	var subs := []
 	for s in m.subjects:
-		subs.append([s.position, s.yaw() if s.pivot else 0.0, pack_flags(s), s.deaths, s.score, s.doom, s.out])
+		subs.append([s.position, s.yaw() if s.pivot else 0.0, pack_flags(s), s.deaths, s.score, s.doom, s.out, maxi(0, MODES.find(s.dead_mode))])
 	return {"t": m.t, "lt": m.lt, "stt": m.state_t, "d": -1 if m.state == MatchManager.ST_LOBBY else m.door_index,
 		"s": subs, "x": m.door.net_state() if m.door else {}}
 
@@ -334,8 +363,11 @@ func _recv(c: Callable) -> void:
 
 @rpc("authority", "call_remote", "reliable")
 func s_welcome(seat: int) -> void:
+	var first := not connected
 	my_seat = seat
 	connected = true
+	if first:
+		joined.emit()
 	status_changed.emit("ĐÃ VÀO PHÒNG. BẠN LÀ ĐỐI TƯỢNG %02d." % (seat + 1))
 
 
@@ -489,7 +521,23 @@ func _apply_snap(d: Dictionary) -> void:
 		s.deaths = int(e[3])
 		s.score = int(e[4])
 		s.doom = float(e[5])
+		if e.size() > 7:
+			_sync_dead(s, float(e[6]), int(e[7]))
 	m.door.apply_net_state(d.get("x", {}))
+
+
+## Người vào giữa trận đã lỡ sự kiện chết (RPC chỉ gửi một lần): máy chủ báo đã chết ít nhất 0,3 giây
+## (đủ lâu để RPC tin cậy đáng lẽ đã tới) mà máy này vẫn thấy sống thì đánh dấu chết, ẩn hình nhân, không phát hiệu ứng.
+func _sync_dead(s: Subject, server_out: float, mode_code: int) -> void:
+	if server_out <= 0.0 or server_out > 2.7 or s.out > 0.0:
+		return
+	s.out = server_out
+	s.dead_mode = String(MODES[clampi(mode_code, 0, MODES.size() - 1)])
+	s.dead_t = 3.0
+	s.tag.visible = false
+	s.set_solid(false)
+	if s.pivot:
+		s.pivot.visible = false
 
 
 # =====================================================================
