@@ -296,8 +296,9 @@ func apply_net_state(d: Dictionary) -> void:
 		var tl: Dictionary = tiles[i]
 		if ns == 0 and nh == 1 and int(tl.hp) == 2:
 			_damage(i)
-		elif ns >= 2 and int(tl.state) == 0:
-			# đã rơi trên máy chủ mà máy này chưa thấy rung (người vào sau / lỡ ảnh chụp): ẩn ngay
+		elif ns >= 2 and (int(tl.state) == 0 or (int(tl.state) == 1 and m.state != MatchManager.ST_PLAY)):
+			# đã rơi trên máy chủ mà máy này chưa thấy rung (người vào sau / lỡ ảnh chụp), hoặc đang rung khi
+			# vòng đã hết (ngoài lúc chơi không có khung nào cho nó rơi): ẩn ngay
 			tl.state = 3
 			tl.hp = 0
 			(tl.mi as Node3D).visible = false

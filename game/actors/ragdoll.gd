@@ -15,7 +15,7 @@ var _t := 0.0
 static func _body(parent: Node3D, at: Transform3D, shape: Shape3D, offset: Vector3, mass: float) -> RigidBody3D:
 	var b := RigidBody3D.new()
 	b.collision_layer = LAYER_RAGDOLL
-	# không va chạm với xác khác (kể cả các khối của chính nó): khớp nối đã giữ hình, đỡ tải cho Jolt
+	# không va chạm với xác khác (kể cả các khối của chính nó): khớp nối đã giữ hình, đỡ tải cho bộ vật lý
 	b.collision_mask = LAYER_FLOOR | LAYER_OBSTACLE
 	b.mass = mass
 	b.linear_damp = 0.4

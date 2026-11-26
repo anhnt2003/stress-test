@@ -101,7 +101,16 @@ func cycle_look(i: int, dh: int, dc: int) -> void:
 		var ci := SubjectModel.COLORS.find(lk.color)
 		if ci < 0:
 			ci = Palette.SUIT.find(lk.color)
-		lk.color = SubjectModel.COLORS[posmod(ci + dc, SubjectModel.COLORS.size())]
+		var n := SubjectModel.COLORS.size()
+		var taken: Array = []
+		for j in N:
+			if j != i:
+				taken.append(looks[j].color)
+		for _k in n:   # bỏ qua màu ghế khác đang mặc: cửa sơn ô tô theo màu áo, trùng màu thì không phân biệt được
+			ci = posmod(ci + signi(dc), n)
+			if not taken.has(SubjectModel.COLORS[ci]):
+				break
+		lk.color = SubjectModel.COLORS[ci]
 	looks[i] = lk
 
 

@@ -52,6 +52,11 @@ func run_async(t) -> void:
 	app.m.seed_base = 42
 	app.flow.start_match()
 	t.check("có --seed thì giữ nguyên seed", app.m.seed_base, 42)
+	# Máy khách về sảnh (không qua Flow): lời bình cũ và câu tổng kết 999 giây bị bỏ
+	app.voice._queue.append({"text": "CÂU CŨ", "at": 0.0, "dur": 3.0})
+	app.voice._final = true
+	app.m.load_lobby()
+	t.ok("nạp sảnh: bỏ lời bình cũ và cờ tổng kết", app.voice._queue.is_empty() and not app.voice._final)
 	app.queue_free()
 	await t.process_frame
 
@@ -126,10 +131,13 @@ func run_async(t) -> void:
 	var s3: Subject = m.subjects[3]
 	net._sync_dead(s3, 0.05, NetSession.MODES.find("fry"))
 	t.ok("ảnh chụp cũ đánh dấu chết", s3.out > 0.0 and not s3.pivot.visible)
+	s3.animate(1.0, false)   # tư thế ngã của kiểu chết "fry" (ngả người ra sau)
+	t.ok("lúc bị coi là chết: tư thế ngã", s3.pivot.rotation.x < -1.0)
 	var snap := net.snapshot()
 	snap.s[3][6] = 0.0
 	net._apply_snap(snap)
 	t.ok("ảnh chụp mới báo sống: hồi lại", s3.out <= 0.0 and s3.pivot.visible)
+	t.ok("hồi lại: đứng thẳng, không nằm ngửa", is_zero_approx(s3.pivot.rotation.x) and is_zero_approx(s3.lower.rotation.x))
 	# Menu đang mở: không gửi hướng đi
 	net._test.move = Vector2(1, 0)
 	net.input_blocked = true
@@ -175,9 +183,14 @@ func run_async(t) -> void:
 	var st0 := PackedByteArray()
 	st0.resize(m.door.tiles.size())
 	st0[10] = 3 * 4   # ô 10 đã rơi hẳn trên máy chủ
+	st0[11] = 2 * 4   # ô 11 rơi trên máy chủ ngay trước khi hết vòng, máy khách vẫn đang thấy rung
+	m.door.tiles[11].state = 1
+	m.door.tiles[11].hp = 0
+	m.door.tiles[11].timer = 0.5
 	var sn := {"t": 5.0, "lt": 30.0, "stt": 1.0, "d": 6, "s": [], "x": {"t": st0}}
 	net3._apply_snap(sn)
 	t.ok("ô đã rơi trên máy chủ thì ẩn ngay ở máy khách", not (m.door.tiles[10].mi as Node3D).visible)
+	t.ok("ô đang rung khi đã hết vòng: ẩn luôn (không đứng yên giữa sàn)", not (m.door.tiles[11].mi as Node3D).visible)
 	net3.mode = ""
 	net3.queue_free()
 	m.remote = false
@@ -265,5 +278,35 @@ func run(t) -> void:
 	# Tên người chơi từ máy khách: bỏ ký tự điều khiển
 	t.check("tên có xuống dòng", NetSession.sanitize_name("a\n\nb\tc"), "A  B C")
 	t.check("tên dài bị cắt", NetSession.sanitize_name("x".repeat(40)).length(), 16)
+	t.ok("tên quá dài bị từ chối trước khi xử lý", not NetSession.hello_ok("x".repeat(65), "tok") and NetSession.hello_ok("x".repeat(40), "tok"))
+	t.ok("mã máy quá dài bị từ chối", not NetSession.hello_ok("AN", "t".repeat(65)))
+	# Đổi màu áo bỏ qua màu ghế khác đang mặc (cửa sơn ô tô theo màu áo)
+	var cl := Seats.new()
+	cl.cycle_look(0, 0, 1)
+	t.check("đổi màu: bỏ qua 3 màu ghế khác đang mặc", cl.looks[0].color, SubjectModel.COLORS[4])
+	for k in 20:
+		cl.cycle_look(k % 4, 0, 1 if k % 3 else -1)
+	var used := {}
+	for j in 4:
+		used[cl.looks[j].color] = true
+	t.check("đổi màu liên tục: 4 ghế vẫn 4 màu khác nhau", used.size(), 4)
+	# Mã phòng: Wi-Fi nhà đứng trước VPN 10.x (OpenVPN / WireGuard trên Windows, tên hệ thống là GUID)
+	var vpn := [
+		{"name": "{E5}", "friendly": "OpenVPN TAP-Windows6", "addresses": ["10.8.0.2"]},
+		{"name": "{F6}", "friendly": "wg0", "addresses": ["10.6.0.3"]},
+		{"name": "{G7}", "friendly": "Wi-Fi", "addresses": ["192.168.1.5"]},
+	]
+	t.check("Windows: Wi-Fi 192.168 trước VPN 10.x", RoomCode.rank_candidates(vpn)[0], "192.168.1.5")
+	var corp := [
+		{"name": "{H8}", "friendly": "Local Area Connection", "addresses": ["10.20.30.40"]},
+		{"name": "{I9}", "friendly": "ExpressVPN Adapter", "addresses": ["10.99.0.5"]},
+	]
+	t.check("\"Local Area Connection\" không bị coi là loopback, VPN xếp sau", RoomCode.rank_candidates(corp), ["10.20.30.40", "10.99.0.5"])
+	var lin := [
+		{"name": "lxcbr0", "friendly": "lxcbr0", "addresses": ["10.0.3.1"]},
+		{"name": "ztks5abcde", "friendly": "ztks5abcde", "addresses": ["10.147.17.9"]},
+		{"name": "eth0", "friendly": "eth0", "addresses": ["10.1.1.20"]},
+	]
+	t.check("Linux: eth0 trước ZeroTier, bridge LXC cuối", RoomCode.rank_candidates(lin), ["10.1.1.20", "10.147.17.9", "10.0.3.1"])
 	# Ô vào phòng: localhost kèm cổng
 	t.check("localhost:cổng", RoomCode.parse_address("localhost:9000", 24555), {"ip": "127.0.0.1", "port": 9000})

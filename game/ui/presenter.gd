@@ -95,6 +95,8 @@ func _on_door_loaded(i: int, door: DoorBase) -> void:
 	hud.reset_fx()
 	chamber.clear_alert()
 	result.visible = false
+	if i <= 0:
+		voice.clear()   # về sảnh / trận mới: máy khách không qua Flow nên lời bình (và câu LLM) cũ phải bỏ ở đây
 	if i < 0:
 		hud.set_titles("STRESS TEST", door.rule)
 		chamber.set_idle("STRESS TEST\nCHỜ ĐỐI TƯỢNG")

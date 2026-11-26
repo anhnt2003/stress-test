@@ -58,6 +58,7 @@ func _arm(w: Dictionary, q: Vector2) -> void:
 	w.timer = 0.95
 	(w.ring as Node3D).position = Vector3(q.x, PLATFORM_TOP, q.y)
 	(w.ring as Node3D).visible = true
+	(w.ring as Node3D).reset_physics_interpolation()   # vòng báo hiện ở chỗ mới, không lướt từ chỗ cũ
 	(w.n as Node3D).position = Vector3(q.x, HANG, q.y)
 	(w.n as Node3D).reset_physics_interpolation()
 

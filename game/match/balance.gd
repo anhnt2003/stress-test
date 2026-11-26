@@ -2,7 +2,7 @@ class_name Balance
 ## Chạy nhiều trận bằng bot (không màn hình) với seed khác nhau, in thống kê để cân bằng cửa:
 ## số lần chết trung bình mỗi người mỗi cửa, tỉ lệ cửa không ai chết, chênh lệch điểm.
 ## Chạy: godot --headless --fixed-fps 60 --path . -- --balance=20
-## Mỗi bước luật chạy trong một khung vật lý để va chạm (Jolt) có trạng thái mới nhất.
+## Mỗi bước luật chạy trong một khung vật lý để va chạm (GodotPhysics3D) có trạng thái mới nhất.
 
 const DT := 1.0 / 60.0
 

@@ -66,9 +66,9 @@ static func parse_address(text: String, default_port: int) -> Dictionary:
 
 ## Tên card mạng ảo / máy ảo / container / đường hầm: địa chỉ của chúng không ai ở máy khác vào được.
 const VIRTUAL_HINTS := ["bridge", "vbox", "virtualbox", "vmnet", "vmware", "docker", "veth", "virbr", "vethernet",
-	"hyper-v", "default switch", "br-", "lxc", "lxd", "llw", "awdl", "anpi", "ap1", "lo", "gif", "stf", "p2p"]
+	"hyper-v", "default switch", "br-", "lxcbr", "lxdbr", "llw", "awdl", "anpi", "ap1", "lo", "gif", "stf", "p2p"]
 ## Tên VPN LAN dùng để chơi khác mạng (vẫn hợp lệ, nhưng xếp sau LAN thật).
-const VPN_HINTS := ["tailscale", "zerotier", "zt", "utun", "wg", "tun", "tap"]
+const VPN_HINTS := ["tailscale", "zerotier", "wireguard", "openvpn", "vpn", "zt", "utun", "wg", "tun", "tap"]
 
 
 static func _is_private(a: String) -> bool:
@@ -81,11 +81,24 @@ static func _is_cgnat(a: String) -> bool:   # 100.64.0.0/10: Tailscale
 	return p[0] == "100" and int(p[1]) >= 64 and int(p[1]) <= 127
 
 
-static func _name_has(name: String, hints: Array) -> bool:
-	var n := name.to_lower()
-	for h in hints:
-		if n.begins_with(h) or (h.length() > 3 and n.contains(h)):
-			return true
+## Tên card có chứa gợi ý không. Xét riêng tên hệ thống (trên Windows là GUID) và tên hiển thị.
+## Gợi ý dài hoặc có dấu ("br-") khớp bất kỳ đâu. Gợi ý ngắn chỉ khớp đầu một từ: với card ảo (strict) phần còn
+## lại của từ phải là số (lo0, gif0, ap1…) để "Local Area Connection" không bị coi là loopback; với VPN thì
+## khớp mọi đuôi (wg0, tap-windows6, ztks5abcde…), gợi ý 3 ký tự ("vpn", "tun") khớp bất kỳ đâu (ExpressVPN).
+static func _name_has(names: Array, hints: Array, strict: bool) -> bool:
+	for raw in names:
+		var n := String(raw).to_lower()
+		var words := n.replace("-", " ").replace("_", " ").replace("(", " ").replace(")", " ").split(" ", false)
+		for h: String in hints:
+			if h.length() > 3 or not h.is_valid_identifier() or (not strict and h.length() == 3):
+				if n.contains(h):
+					return true
+				continue
+			for w in words:
+				if w.begins_with(h):
+					var rest := w.substr(h.length())
+					if not strict or rest == "" or rest.is_valid_int():
+						return true
 	return false
 
 
@@ -94,7 +107,7 @@ static func _name_has(name: String, hints: Array) -> bool:
 static func rank_candidates(ifaces: Array) -> Array[String]:
 	var scored: Array = []
 	for it in ifaces:
-		var nm := "%s %s" % [String(it.get("name", "")), String(it.get("friendly", ""))]
+		var nm := [String(it.get("name", "")), String(it.get("friendly", ""))]
 		for a in it.get("addresses", []):
 			var ip := String(a)
 			if ip.count(".") != 3 or ip.begins_with("127.") or ip.begins_with("169.254."):
@@ -102,12 +115,12 @@ static func rank_candidates(ifaces: Array) -> Array[String]:
 			if ip.ends_with(".0") or ip.ends_with(".255"):
 				continue   # địa chỉ mạng / broadcast, không phải địa chỉ máy
 			var rank := 4
-			if _name_has(nm, VIRTUAL_HINTS):
+			if _name_has(nm, VIRTUAL_HINTS, true):
 				rank = 9
-			elif _is_cgnat(ip) or _name_has(nm, VPN_HINTS):
+			elif _is_cgnat(ip) or _name_has(nm, VPN_HINTS, false):
 				rank = 2
 			elif _is_private(ip):
-				rank = 0 if ip.begins_with("192.168.") or ip.begins_with("10.") else 1
+				rank = 0 if ip.begins_with("192.168.") else 1   # mạng nhà / Wi-Fi trước, 10.x / 172.x (VPN công ty…) sau
 			scored.append([rank, ip])
 	scored.sort_custom(func(x, y): return x[0] < y[0] or (x[0] == y[0] and String(x[1]) < String(y[1])))
 	var out: Array[String] = []

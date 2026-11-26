@@ -246,7 +246,7 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 	if peers.has(id):
 		rpc_id(id, "s_welcome", int(peers[id].seat))   # chào lại: không cấp thêm ghế
 		return
-	if token.length() > 64:
+	if not hello_ok(nm, token):
 		_reject(id, "DỮ LIỆU VÀO PHÒNG KHÔNG HỢP LỆ.")
 		return
 	var now := Time.get_ticks_msec() / 1000.0
@@ -289,6 +289,11 @@ func _broadcast(method: String, args: Array) -> void:
 		var pp := peer.get_peer(id) if peer else null
 		if pp and pp.get_state() == ENetPacketPeer.STATE_CONNECTED:
 			callv("rpc_id", [id, method] + args)
+
+
+## Giới hạn độ dài tên / mã máy trước khi xử lý từng ký tự: một gói c_hello cỡ vài MB làm treo máy chủ.
+static func hello_ok(nm: String, token: String) -> bool:
+	return nm.length() <= 64 and token.length() <= 64
 
 
 ## Tên người chơi từ máy khách: bỏ ký tự điều khiển (xuống dòng làm vỡ bảng sảnh và nhật ký), tối đa 16 ký tự.
@@ -645,6 +650,9 @@ func _unsync_dead(s: Subject) -> void:
 	s.dead_t = 0.0
 	if s.pivot:
 		s.pivot.visible = true
+		s.pivot.rotation.x = 0.0   # animate() đã đặt tư thế ngã (đổ người / gập chân) lúc bị coi là chết
+	if s.lower:
+		s.lower.rotation.x = 0.0
 	s.tag.visible = true
 
 
@@ -721,18 +729,21 @@ func _predict(s: Subject, dt: float) -> void:
 		p += m.door.surface_velocity(s) * dt
 	p = m.door.constrain(s, p)
 	var smp := _bufs[s.idx].sample(_clock + _offset)
+	var snap := false
 	if smp.size() == 2:
 		var server: Vector3 = smp[0]
 		p.y = server.y
 		var err := Vector3(server.x - p.x, 0, server.z - p.z)
 		if err.length() > 1.6:
 			p = server   # lệch quá xa (bị đẩy, băng chuyền...): nhảy về vị trí máy chủ
-			s.reset_physics_interpolation()
+			snap = true
 		elif err.length() > 0.35:
 			p += err * minf(1.0, 4.0 * dt)
 		if d.length() < 0.1 and s.pivot:
 			s.pivot.rotation.y = lerp_angle(s.pivot.rotation.y, float(smp[1]), minf(1.0, 10.0 * dt))
 	s.position = p
+	if snap:
+		s.reset_physics_interpolation()   # sau khi đặt vị trí mới: không kéo vệt qua sàn
 	if d.length() > 0.1 and s.pivot:
 		s.pivot.rotation.y = lerp_angle(s.pivot.rotation.y, atan2(d.x, d.z), 1.0 - exp(-12.0 * dt))
 
