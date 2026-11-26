@@ -17,6 +17,7 @@ func refresh(m: MatchManager, room_text := "") -> void:
 	if room_text != "":
 		($Room as Label).text = room_text
 	($Options as Label).text = "TAB: CHƠI XẤU %s   ·   GHẾ TRỐNG DO BOT NGỒI" % ("BẬT" if m.sabotage_enabled else "TẮT")
+	($Start as Label).text = "ESC: RỜI PHÒNG" if m.remote else "ENTER / START: BẮT ĐẦU      ESC: MENU CHÍNH"
 
 
 func set_room(text: String) -> void:

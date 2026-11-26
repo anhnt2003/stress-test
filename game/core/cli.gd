@@ -5,7 +5,7 @@ class_name Cli
 ##   --phase=SEC       chạy trước SEC giây mô phỏng trước khi chụp
 ##   --door=N          vào thẳng cửa N (1..10)
 ##   --match           chạy cả trận từ cửa 1 bằng bot
-##   --lobby / --menu  chụp sảnh / menu chính
+##   --lobby / --menu  chụp sảnh / menu chính;  --settings  chụp màn cài đặt;  --no-gore  tắt máu me
 ##   --closeup         camera cận cảnh 4 đối tượng
 ##   --seed=N          đổi seed của trận (mặc định cố định để smoke test lặp lại được)
 ##   --no-sabotage     tắt nút chơi xấu (bot không dùng)
@@ -21,7 +21,7 @@ class_name Cli
 static func parse(args: PackedStringArray) -> Dictionary:
 	var o := {"shot": "", "phase": 0.0, "door": -1, "match": false, "lobby": false, "menu": false, "closeup": false,
 		"seed": 0, "sabotage": true, "host": -1, "join": "", "name": "", "autostart": -1.0, "quit_after": -1.0,
-		"net_lag": 0, "balance": 0, "net_test": false}
+		"net_lag": 0, "balance": 0, "net_test": false, "settings": false, "gore": true}
 	for a in args:
 		var kv := a.split("=", true, 1)
 		var k := kv[0]
@@ -44,4 +44,6 @@ static func parse(args: PackedStringArray) -> Dictionary:
 			"--net-lag": o.net_lag = int(v)
 			"--balance": o.balance = int(v)
 			"--net-test": o.net_test = true
+			"--settings": o.settings = true
+			"--no-gore": o.gore = false
 	return o

@@ -267,6 +267,9 @@ func _on_net_status(text: String) -> void:
 	if net.is_client() and net.connected:
 		menus.hide_all()
 		paused = false
+		presenter.lobby.set_room("ĐÃ VÀO PHÒNG  ·  MÁY CHỦ SẼ BẮT ĐẦU TRẬN  ·  ESC: RỜI PHÒNG")
+	elif net.is_host():
+		presenter.lobby.set_room(net.room_text())
 	presenter.hud.say(text, 3.0)
 
 

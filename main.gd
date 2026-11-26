@@ -93,7 +93,11 @@ func _physics_process(delta: float) -> void:
 # ---------- chế độ chụp ảnh / mô phỏng không màn hình ----------
 func _run_shot() -> void:
 	m.log_events = true
-	if cli.menu:
+	presenter.set_gore(cli.gore)
+	if cli.settings:
+		flow.show_menu()
+		flow._on_main("Settings")
+	elif cli.menu:
 		flow.show_menu()
 	elif cli.lobby:
 		m.load_lobby()

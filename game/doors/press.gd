@@ -35,7 +35,8 @@ func setup(level_root: Node3D) -> void:
 	Build.cyl(press, 0.42, 0.42, 7.0, Build.mat(Color(0.55, 0.56, 0.54), 0.2, 0.95), Vector3(0, 4.8, 0))
 	Build.cyl(press, 0.6, 0.6, 0.3, Build.mat(Palette.STEEL, 0.5, 0.75), Vector3(0, 1.45, 0))
 	for k in 5:  # vệt máu chảy trên thân máy
-		Build.box(press, Vector3(randf_range(0.06, 0.2), randf_range(0.3, 0.8), 0.01), m.gore.blood_mat, Vector3(randf_range(-0.9, 0.9), 0.5, 1.156))
+		var streak := Build.box(press, Vector3(randf_range(0.06, 0.2), randf_range(0.3, 0.8), 0.01), m.gore.blood_mat, Vector3(randf_range(-0.9, 0.9), 0.5, 1.156))
+		streak.visible = m.gore.enabled
 	beacon_mat = Build.mat(Color(1.0, 0.1, 0.05), 0.3, 0.0, 2.0)
 	Build.ball(press, 0.12, beacon_mat, Vector3(0.85, 1.4, 0.85))
 	Build.ball(press, 0.12, beacon_mat, Vector3(-0.85, 1.4, 0.85))
