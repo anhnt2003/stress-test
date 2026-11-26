@@ -1,0 +1,300 @@
+[gd_scene load_steps=23 format=3]
+
+[ext_resource type="Script" path="res://game/ui/main_menu.gd" id="1_478ix"]
+[ext_resource type="FontFile" path="res://fonts/Anton-Regular.ttf" id="2_hjbl3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3nuvx"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_w7b7d"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3nlpe"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bx08p"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mcftn"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cx13a"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5vhoe"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_y6wp3"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7ecrl"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nmgag"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sv6g1"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vm6gw"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7rwmt"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0jhe6"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ganie"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_aoi4y"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dmu7k"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l70tf"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8anck"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g5qj0"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[node name="MainMenu" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_right = 800.0
+offset_bottom = 450.0
+script = ExtResource("1_478ix")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 800.0
+offset_bottom = 450.0
+color = Color(0, 0, 0, 0.55)
+
+[node name="Head" type="Label" parent="."]
+layout_mode = 0
+offset_top = 92.0
+offset_right = 800.0
+offset_bottom = 148.0
+theme_override_fonts/font = ExtResource("2_hjbl3")
+theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+text = "STRESS TEST"
+horizontal_alignment = 1
+
+[node name="Buttons" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 250.0
+offset_top = 170.0
+offset_right = 550.0
+offset_bottom = 370.0
+theme_override_constants/separation = 8
+
+[node name="Local" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(300, 32)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_3nuvx")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_w7b7d")
+theme_override_styles/hover = SubResource("StyleBoxFlat_3nlpe")
+theme_override_styles/focus = SubResource("StyleBoxFlat_bx08p")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_hjbl3")
+theme_override_font_sizes/font_size = 18
+text = "CHƠI CHUNG MỘT MÁY"
+
+[node name="Host" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(300, 32)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_mcftn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_cx13a")
+theme_override_styles/hover = SubResource("StyleBoxFlat_5vhoe")
+theme_override_styles/focus = SubResource("StyleBoxFlat_y6wp3")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_hjbl3")
+theme_override_font_sizes/font_size = 18
+text = "TẠO PHÒNG QUA MẠNG"
+
+[node name="Join" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(300, 32)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_7ecrl")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_nmgag")
+theme_override_styles/hover = SubResource("StyleBoxFlat_sv6g1")
+theme_override_styles/focus = SubResource("StyleBoxFlat_vm6gw")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_hjbl3")
+theme_override_font_sizes/font_size = 18
+text = "VÀO PHÒNG QUA MẠNG"
+
+[node name="Settings" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(300, 32)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_7rwmt")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_0jhe6")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ganie")
+theme_override_styles/focus = SubResource("StyleBoxFlat_aoi4y")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_hjbl3")
+theme_override_font_sizes/font_size = 18
+text = "CÀI ĐẶT"
+
+[node name="Quit" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(300, 32)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_dmu7k")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_l70tf")
+theme_override_styles/hover = SubResource("StyleBoxFlat_8anck")
+theme_override_styles/focus = SubResource("StyleBoxFlat_g5qj0")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_hjbl3")
+theme_override_font_sizes/font_size = 18
+text = "THOÁT"
+
+[node name="Foot" type="Label" parent="."]
+layout_mode = 0
+offset_top = 420.0
+offset_right = 800.0
+offset_bottom = 443.0
+theme_override_fonts/font = ExtResource("2_hjbl3")
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 0.6)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+text = "MŨI TÊN / D-PAD: CHỌN   ·   ENTER / A: XÁC NHẬN"
+horizontal_alignment = 1
+
+[node name="Tag" type="Label" parent="."]
+layout_mode = 0
+offset_top = 140.0
+offset_right = 800.0
+offset_bottom = 163.0
+theme_override_fonts/font = ExtResource("2_hjbl3")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "BẢN THỬ NGHIỆM 10 CỬA  ·  3–4 ĐỐI TƯỢNG  ·  CÓ CẢNH MÁU ME (TẮT ĐƯỢC TRONG CÀI ĐẶT)"
+horizontal_alignment = 1

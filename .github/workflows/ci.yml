@@ -19,19 +19,17 @@ jobs:
           mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
           rm godot.zip
 
-      - name: Import tài nguyên
-        run: godot --headless --path . --import
-
-      - name: Kiểm tra cú pháp
+      - name: Import tài nguyên + kiểm tra cú pháp mọi script
         run: |
-          godot --headless --path . --check-only --script res://main.gd 2>&1 | tee parse.log
-          ! grep -q "SCRIPT ERROR" parse.log
+          godot --headless --path . --import 2>&1 | tee import.log
+          ! grep -q "SCRIPT ERROR" import.log
 
-      - name: Kiểm thử tính điểm
-        run: godot --headless --path . --script res://tests/test_scoring.gd
+      - name: Kiểm thử (tính điểm, ghế, cài đặt, Cỗ Máy, 10 cửa, mạng)
+        run: godot --headless --path . --script res://tests/run_all.gd
 
-      - name: Chạy thử cả trận 10 cửa (bot)
+      - name: Chạy thử cả trận 10 cửa (bot, có chơi xấu)
         run: |
           godot --headless --path . -- --shot=/tmp/none.png --match --phase=400 2>&1 | tee match.log
           ! grep -q "SCRIPT ERROR" match.log
           grep -q "RESULT door=10" match.log
+          grep -q "FINAL totals=" match.log

@@ -1,0 +1,238 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://game/ui/join_dialog.gd" id="1_qanky"]
+[ext_resource type="FontFile" path="res://fonts/Anton-Regular.ttf" id="2_4xbwj"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6k4yb"]
+bg_color = Color(0, 0, 0, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6wl0a"]
+bg_color = Color(0.1, 0.06, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l0ptp"]
+bg_color = Color(0, 0, 0, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oo5hl"]
+bg_color = Color(0.1, 0.06, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mtbfn"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r7sce"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_28t2t"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oq28g"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_w48j4"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4uhgu"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pg8nh"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mpif0"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[node name="JoinDialog" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_right = 800.0
+offset_bottom = 450.0
+script = ExtResource("1_qanky")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 800.0
+offset_bottom = 450.0
+color = Color(0, 0, 0, 0.8)
+
+[node name="Head" type="Label" parent="."]
+layout_mode = 0
+offset_top = 50.0
+offset_right = 800.0
+offset_bottom = 96.0
+theme_override_fonts/font = ExtResource("2_4xbwj")
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+text = "VÀO PHÒNG"
+horizontal_alignment = 1
+
+[node name="LCode" type="Label" parent="."]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 130.0
+offset_right = 200.0
+offset_bottom = 130.0
+theme_override_fonts/font = ExtResource("2_4xbwj")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "MÃ PHÒNG HOẶC IP[:CỔNG]"
+
+[node name="LName" type="Label" parent="."]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 200.0
+offset_right = 200.0
+offset_bottom = 200.0
+theme_override_fonts/font = ExtResource("2_4xbwj")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "TÊN CỦA BẠN"
+
+[node name="Code" type="LineEdit" parent="."]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 152.0
+offset_right = 600.0
+offset_bottom = 184.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_6k4yb")
+theme_override_styles/focus = SubResource("StyleBoxFlat_6wl0a")
+theme_override_fonts/font = ExtResource("2_4xbwj")
+theme_override_font_sizes/font_size = 18
+max_length = 24
+
+[node name="Name" type="LineEdit" parent="."]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 222.0
+offset_right = 600.0
+offset_bottom = 254.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_l0ptp")
+theme_override_styles/focus = SubResource("StyleBoxFlat_oo5hl")
+theme_override_fonts/font = ExtResource("2_4xbwj")
+theme_override_font_sizes/font_size = 18
+max_length = 16
+
+[node name="Status" type="Label" parent="."]
+layout_mode = 0
+offset_top = 270.0
+offset_right = 800.0
+offset_bottom = 293.0
+theme_override_fonts/font = ExtResource("2_4xbwj")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.9, 0.6, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+horizontal_alignment = 1
+
+[node name="Connect" type="Button" parent="."]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 310.0
+offset_right = 390.0
+offset_bottom = 344.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_mtbfn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_r7sce")
+theme_override_styles/hover = SubResource("StyleBoxFlat_28t2t")
+theme_override_styles/focus = SubResource("StyleBoxFlat_oq28g")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_4xbwj")
+theme_override_font_sizes/font_size = 18
+text = "VÀO"
+
+[node name="Back" type="Button" parent="."]
+layout_mode = 0
+offset_left = 410.0
+offset_top = 310.0
+offset_right = 600.0
+offset_bottom = 344.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_w48j4")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_4uhgu")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pg8nh")
+theme_override_styles/focus = SubResource("StyleBoxFlat_mpif0")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_4xbwj")
+theme_override_font_sizes/font_size = 18
+text = "QUAY LẠI"
+
+[node name="Help" type="Label" parent="."]
+layout_mode = 0
+offset_top = 360.0
+offset_right = 1022.0
+offset_bottom = 383.0
+theme_override_fonts/font = ExtResource("2_4xbwj")
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 0.6)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "MÃ PHÒNG HIỆN Ở SẢNH CỦA MÁY CHỦ. CHƠI KHÁC MẠNG CẦN MỞ CỔNG UDP 24555 HOẶC DÙNG VPN LAN (TAILSCALE, ZEROTIER)."
+horizontal_alignment = 1

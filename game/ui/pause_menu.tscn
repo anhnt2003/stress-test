@@ -1,0 +1,287 @@
+[gd_scene load_steps=23 format=3]
+
+[ext_resource type="Script" path="res://game/ui/pause_menu.gd" id="1_du0dh"]
+[ext_resource type="FontFile" path="res://fonts/Anton-Regular.ttf" id="2_3tcw5"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_otv6y"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vnflq"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pgljg"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rjqkg"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6wpvo"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fg14j"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0l2i8"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xgnqj"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qxowb"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eiyto"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fbxa4"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lsfyd"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gej3r"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uwe3j"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_knx4n"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fjlnd"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gt2ke"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eva3v"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1jn6o"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d7dhx"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[node name="PauseMenu" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_right = 800.0
+offset_bottom = 450.0
+script = ExtResource("1_du0dh")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 800.0
+offset_bottom = 450.0
+color = Color(0, 0, 0, 0.55)
+
+[node name="Head" type="Label" parent="."]
+layout_mode = 0
+offset_top = 72.0
+offset_right = 800.0
+offset_bottom = 128.0
+theme_override_fonts/font = ExtResource("2_3tcw5")
+theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+text = "TẠM DỪNG"
+horizontal_alignment = 1
+
+[node name="Buttons" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 250.0
+offset_top = 150.0
+offset_right = 550.0
+offset_bottom = 350.0
+theme_override_constants/separation = 8
+
+[node name="Resume" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(300, 32)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_otv6y")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_vnflq")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pgljg")
+theme_override_styles/focus = SubResource("StyleBoxFlat_rjqkg")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_3tcw5")
+theme_override_font_sizes/font_size = 18
+text = "CHƠI TIẾP"
+
+[node name="Restart" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(300, 32)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_6wpvo")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_fg14j")
+theme_override_styles/hover = SubResource("StyleBoxFlat_0l2i8")
+theme_override_styles/focus = SubResource("StyleBoxFlat_xgnqj")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_3tcw5")
+theme_override_font_sizes/font_size = 18
+text = "CHƠI LẠI TỪ CỬA 1"
+
+[node name="Settings" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(300, 32)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_qxowb")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_eiyto")
+theme_override_styles/hover = SubResource("StyleBoxFlat_fbxa4")
+theme_override_styles/focus = SubResource("StyleBoxFlat_lsfyd")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_3tcw5")
+theme_override_font_sizes/font_size = 18
+text = "CÀI ĐẶT"
+
+[node name="Lobby" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(300, 32)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_gej3r")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_uwe3j")
+theme_override_styles/hover = SubResource("StyleBoxFlat_knx4n")
+theme_override_styles/focus = SubResource("StyleBoxFlat_fjlnd")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_3tcw5")
+theme_override_font_sizes/font_size = 18
+text = "VỀ SẢNH"
+
+[node name="MainMenu" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(300, 32)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_gt2ke")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_eva3v")
+theme_override_styles/hover = SubResource("StyleBoxFlat_1jn6o")
+theme_override_styles/focus = SubResource("StyleBoxFlat_d7dhx")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_3tcw5")
+theme_override_font_sizes/font_size = 18
+text = "VỀ MENU CHÍNH"
+
+[node name="Foot" type="Label" parent="."]
+layout_mode = 0
+offset_top = 420.0
+offset_right = 800.0
+offset_bottom = 443.0
+theme_override_fonts/font = ExtResource("2_3tcw5")
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 0.6)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+text = "ESC / START: CHƠI TIẾP   ·   R: CHƠI LẠI   ·   Q: VỀ SẢNH"
+horizontal_alignment = 1

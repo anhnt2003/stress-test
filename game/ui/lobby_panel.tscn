@@ -1,0 +1,328 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://game/ui/lobby_panel.gd" id="1_fe4vr"]
+[ext_resource type="FontFile" path="res://fonts/Anton-Regular.ttf" id="2_xuik2"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oibsc"]
+bg_color = Color(0.02, 0.02, 0.015, 0.88)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[node name="LobbyPanel" type="Panel"]
+visible = false
+offset_left = 90.0
+offset_top = 212.0
+offset_right = 710.0
+offset_bottom = 408.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_oibsc")
+script = ExtResource("1_fe4vr")
+
+[node name="Row0" type="Control" parent="."]
+anchors_preset = 0
+offset_top = 8.0
+offset_bottom = 8.0
+mouse_filter = 2
+
+[node name="Chip" type="ColorRect" parent="Row0"]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 3.0
+offset_right = 22.0
+offset_bottom = 25.0
+mouse_filter = 2
+color = Color(0.592, 0.2605, 0.2265, 1)
+
+[node name="Name" type="Label" parent="Row0"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = -1.0
+offset_right = 30.0
+offset_bottom = -1.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+text = "ĐT-01"
+
+[node name="Device" type="Label" parent="Row0"]
+layout_mode = 0
+offset_left = 98.0
+offset_top = 3.0
+offset_right = 98.0
+offset_bottom = 3.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Hat" type="Label" parent="Row0"]
+layout_mode = 0
+offset_left = 370.0
+offset_top = 3.0
+offset_right = 370.0
+offset_bottom = 3.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Color" type="Label" parent="Row0"]
+layout_mode = 0
+offset_left = 494.0
+offset_top = 3.0
+offset_right = 494.0
+offset_bottom = 3.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Row1" type="Control" parent="."]
+anchors_preset = 0
+offset_top = 35.0
+offset_bottom = 35.0
+mouse_filter = 2
+
+[node name="Chip" type="ColorRect" parent="Row1"]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 3.0
+offset_right = 22.0
+offset_bottom = 25.0
+mouse_filter = 2
+color = Color(0.677, 0.558, 0.252, 1)
+
+[node name="Name" type="Label" parent="Row1"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = -1.0
+offset_right = 30.0
+offset_bottom = -1.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+text = "ĐT-02"
+
+[node name="Device" type="Label" parent="Row1"]
+layout_mode = 0
+offset_left = 98.0
+offset_top = 3.0
+offset_right = 98.0
+offset_bottom = 3.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Hat" type="Label" parent="Row1"]
+layout_mode = 0
+offset_left = 370.0
+offset_top = 3.0
+offset_right = 370.0
+offset_bottom = 3.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Color" type="Label" parent="Row1"]
+layout_mode = 0
+offset_left = 494.0
+offset_top = 3.0
+offset_right = 494.0
+offset_bottom = 3.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Row2" type="Control" parent="."]
+anchors_preset = 0
+offset_top = 62.0
+offset_bottom = 62.0
+mouse_filter = 2
+
+[node name="Chip" type="ColorRect" parent="Row2"]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 3.0
+offset_right = 22.0
+offset_bottom = 25.0
+mouse_filter = 2
+color = Color(0.2945, 0.405, 0.541, 1)
+
+[node name="Name" type="Label" parent="Row2"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = -1.0
+offset_right = 30.0
+offset_bottom = -1.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+text = "ĐT-03"
+
+[node name="Device" type="Label" parent="Row2"]
+layout_mode = 0
+offset_left = 98.0
+offset_top = 3.0
+offset_right = 98.0
+offset_bottom = 3.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Hat" type="Label" parent="Row2"]
+layout_mode = 0
+offset_left = 370.0
+offset_top = 3.0
+offset_right = 370.0
+offset_bottom = 3.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Color" type="Label" parent="Row2"]
+layout_mode = 0
+offset_left = 494.0
+offset_top = 3.0
+offset_right = 494.0
+offset_bottom = 3.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Row3" type="Control" parent="."]
+anchors_preset = 0
+offset_top = 89.0
+offset_bottom = 89.0
+mouse_filter = 2
+
+[node name="Chip" type="ColorRect" parent="Row3"]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 3.0
+offset_right = 22.0
+offset_bottom = 25.0
+mouse_filter = 2
+color = Color(0.3625, 0.49, 0.32, 1)
+
+[node name="Name" type="Label" parent="Row3"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = -1.0
+offset_right = 30.0
+offset_bottom = -1.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+text = "ĐT-04"
+
+[node name="Device" type="Label" parent="Row3"]
+layout_mode = 0
+offset_left = 98.0
+offset_top = 3.0
+offset_right = 98.0
+offset_bottom = 3.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Hat" type="Label" parent="Row3"]
+layout_mode = 0
+offset_left = 370.0
+offset_top = 3.0
+offset_right = 370.0
+offset_bottom = 3.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Color" type="Label" parent="Row3"]
+layout_mode = 0
+offset_left = 494.0
+offset_top = 3.0
+offset_right = 494.0
+offset_bottom = 3.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Room" type="Label" parent="."]
+layout_mode = 0
+offset_top = 118.0
+offset_right = 620.0
+offset_bottom = 141.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.6, 0.9, 0.6, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="."]
+layout_mode = 0
+offset_top = 138.0
+offset_right = 736.0
+offset_bottom = 161.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 0.8)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+text = "VÀO / RỜI GHẾ: SPACE · DẤU CHẤM · NÚT A     ĐỔI MŨ: TRÁI / PHẢI     ĐỔI MÀU ÁO: LÊN / XUỐNG"
+horizontal_alignment = 1
+
+[node name="Options" type="Label" parent="."]
+layout_mode = 0
+offset_top = 155.0
+offset_right = 620.0
+offset_bottom = 178.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.85, 0.55, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+horizontal_alignment = 1
+
+[node name="Start" type="Label" parent="."]
+layout_mode = 0
+offset_top = 172.0
+offset_right = 620.0
+offset_bottom = 195.0
+theme_override_fonts/font = ExtResource("2_xuik2")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+text = "ENTER / START: BẮT ĐẦU      ESC: MENU CHÍNH"
+horizontal_alignment = 1

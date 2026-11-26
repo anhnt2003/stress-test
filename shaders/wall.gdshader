@@ -2,6 +2,8 @@
 shader_type spatial;
 #include "common.gdshaderinc"
 uniform float texel = 14.0;
+uniform vec3 tint : source_color = vec3(1.0, 1.0, 1.0);
+uniform float gore = 1.0; // 0: tắt vết máu khô (cài đặt máu me)
 varying vec3 wpos;
 varying vec3 wn;
 void vertex() {
@@ -25,7 +27,8 @@ void fragment() {
 	c = mix(c, vec3(0.30, 0.14, 0.05), rs * 0.6 * smoothstep(1.0, 4.5, y));
 	c *= mix(0.42, 1.0, smoothstep(0.0, 1.5, y + fbm(uv * 1.5) * 0.9));
 	float bl = smoothstep(0.60, 0.70, fbm(uv * 1.7 + 31.0)) * smoothstep(2.4, 0.2, y);
+	bl *= gore;
 	c = mix(c, vec3(0.17, 0.02, 0.012), bl * 0.9);
-	ALBEDO = c;
+	ALBEDO = c * tint;
 	ROUGHNESS = mix(0.95, 0.5, bl);
 }

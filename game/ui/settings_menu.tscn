@@ -1,0 +1,486 @@
+[gd_scene load_steps=26 format=3]
+
+[ext_resource type="Script" path="res://game/ui/settings_menu.gd" id="1_0mlfg"]
+[ext_resource type="FontFile" path="res://fonts/Anton-Regular.ttf" id="2_3nwii"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jdy10"]
+bg_color = Color(0.1, 0.09, 0.07, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vlgbm"]
+bg_color = Color(0.6, 0.35, 0.08, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.6, 0.35, 0.08, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_x52gt"]
+bg_color = Color(1, 0.62, 0.15, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ch3eq"]
+bg_color = Color(0.1, 0.09, 0.07, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jj4l1"]
+bg_color = Color(0.6, 0.35, 0.08, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.6, 0.35, 0.08, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3g7xw"]
+bg_color = Color(1, 0.62, 0.15, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_v27rl"]
+bg_color = Color(0.1, 0.09, 0.07, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cs5u2"]
+bg_color = Color(0.6, 0.35, 0.08, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.6, 0.35, 0.08, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7bown"]
+bg_color = Color(1, 0.62, 0.15, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pw0st"]
+bg_color = Color(0.1, 0.09, 0.07, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tnqka"]
+bg_color = Color(0.6, 0.35, 0.08, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.6, 0.35, 0.08, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hbl3g"]
+bg_color = Color(1, 0.62, 0.15, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jv8cw"]
+bg_color = Color(0.1, 0.09, 0.07, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ogw2m"]
+bg_color = Color(0.6, 0.35, 0.08, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.6, 0.35, 0.08, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1105t"]
+bg_color = Color(1, 0.62, 0.15, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e0rqk"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i8h0c"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sep1k"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_y0fa5"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ciubp"]
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_owsq5"]
+bg_color = Color(0.3, 0.15, 0.03, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6rs54"]
+bg_color = Color(0.12, 0.07, 0.02, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.62, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l8vt3"]
+bg_color = Color(0.16, 0.09, 0.02, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.62, 0.15, 1)
+
+[node name="SettingsMenu" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_right = 800.0
+offset_bottom = 450.0
+script = ExtResource("1_0mlfg")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 800.0
+offset_bottom = 450.0
+color = Color(0, 0, 0, 0.8)
+
+[node name="Head" type="Label" parent="."]
+layout_mode = 0
+offset_top = 14.0
+offset_right = 800.0
+offset_bottom = 60.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+text = "CÀI ĐẶT"
+horizontal_alignment = 1
+
+[node name="L_ÂM_LƯỢNG_CHUNG" type="Label" parent="."]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 72.0
+offset_right = 170.0
+offset_bottom = 72.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "ÂM LƯỢNG CHUNG"
+
+[node name="Master" type="HSlider" parent="."]
+layout_mode = 0
+offset_left = 400.0
+offset_top = 76.0
+offset_right = 630.0
+offset_bottom = 92.0
+theme_override_styles/slider = SubResource("StyleBoxFlat_jdy10")
+theme_override_styles/grabber_area = SubResource("StyleBoxFlat_vlgbm")
+theme_override_styles/grabber_area_highlight = SubResource("StyleBoxFlat_x52gt")
+max_value = 1.0
+step = 0.05
+
+[node name="L_NHẠC_NỀN" type="Label" parent="."]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 99.0
+offset_right = 170.0
+offset_bottom = 99.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "NHẠC NỀN"
+
+[node name="Music" type="HSlider" parent="."]
+layout_mode = 0
+offset_left = 400.0
+offset_top = 103.0
+offset_right = 630.0
+offset_bottom = 119.0
+theme_override_styles/slider = SubResource("StyleBoxFlat_ch3eq")
+theme_override_styles/grabber_area = SubResource("StyleBoxFlat_jj4l1")
+theme_override_styles/grabber_area_highlight = SubResource("StyleBoxFlat_3g7xw")
+max_value = 1.0
+step = 0.05
+
+[node name="L_HIỆU_ỨNG" type="Label" parent="."]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 126.0
+offset_right = 170.0
+offset_bottom = 126.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "HIỆU ỨNG"
+
+[node name="Sfx" type="HSlider" parent="."]
+layout_mode = 0
+offset_left = 400.0
+offset_top = 130.0
+offset_right = 630.0
+offset_bottom = 146.0
+theme_override_styles/slider = SubResource("StyleBoxFlat_v27rl")
+theme_override_styles/grabber_area = SubResource("StyleBoxFlat_cs5u2")
+theme_override_styles/grabber_area_highlight = SubResource("StyleBoxFlat_7bown")
+max_value = 1.0
+step = 0.05
+
+[node name="L_GIỌNG_CỖ_MÁY" type="Label" parent="."]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 153.0
+offset_right = 170.0
+offset_bottom = 153.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "GIỌNG CỖ MÁY"
+
+[node name="Voice" type="HSlider" parent="."]
+layout_mode = 0
+offset_left = 400.0
+offset_top = 157.0
+offset_right = 630.0
+offset_bottom = 173.0
+theme_override_styles/slider = SubResource("StyleBoxFlat_pw0st")
+theme_override_styles/grabber_area = SubResource("StyleBoxFlat_tnqka")
+theme_override_styles/grabber_area_highlight = SubResource("StyleBoxFlat_hbl3g")
+max_value = 1.0
+step = 0.05
+
+[node name="L_RUNG_CAMERA" type="Label" parent="."]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 180.0
+offset_right = 170.0
+offset_bottom = 180.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "RUNG CAMERA"
+
+[node name="Shake" type="HSlider" parent="."]
+layout_mode = 0
+offset_left = 400.0
+offset_top = 184.0
+offset_right = 630.0
+offset_bottom = 200.0
+theme_override_styles/slider = SubResource("StyleBoxFlat_jv8cw")
+theme_override_styles/grabber_area = SubResource("StyleBoxFlat_ogw2m")
+theme_override_styles/grabber_area_highlight = SubResource("StyleBoxFlat_1105t")
+max_value = 1.0
+step = 0.05
+
+[node name="L_ĐỘ_PHÂN_GIẢI" type="Label" parent="."]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 207.0
+offset_right = 170.0
+offset_bottom = 207.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "ĐỘ PHÂN GIẢI"
+
+[node name="Resolution" type="OptionButton" parent="."]
+layout_mode = 0
+offset_left = 400.0
+offset_top = 205.0
+offset_right = 630.0
+offset_bottom = 229.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 14
+selected = 0
+item_count = 4
+popup/item_0/text = "1280 × 720"
+popup/item_0/id = 0
+popup/item_1/text = "1600 × 900"
+popup/item_1/id = 1
+popup/item_2/text = "1920 × 1080"
+popup/item_2/id = 2
+popup/item_3/text = "2560 × 1440"
+popup/item_3/id = 3
+
+[node name="L_TOÀN_MÀN_HÌNH" type="Label" parent="."]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 236.0
+offset_right = 170.0
+offset_bottom = 236.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "TOÀN MÀN HÌNH"
+
+[node name="Fullscreen" type="CheckButton" parent="."]
+layout_mode = 0
+offset_left = 560.0
+offset_top = 232.0
+offset_right = 560.0
+offset_bottom = 232.0
+theme_override_styles/focus = SubResource("StyleBoxFlat_e0rqk")
+
+[node name="L_MÁU_ME" type="Label" parent="."]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 264.0
+offset_right = 170.0
+offset_bottom = 264.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "MÁU ME"
+
+[node name="Gore" type="CheckButton" parent="."]
+layout_mode = 0
+offset_left = 560.0
+offset_top = 260.0
+offset_right = 560.0
+offset_bottom = 260.0
+theme_override_styles/focus = SubResource("StyleBoxFlat_i8h0c")
+
+[node name="L_ĐỌC_LỜI_CỖ_MÁY_(GIỌNG_HỆ_ĐIỀU_HÀNH)" type="Label" parent="."]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 292.0
+offset_right = 170.0
+offset_bottom = 292.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "ĐỌC LỜI CỖ MÁY (GIỌNG HỆ ĐIỀU HÀNH)"
+
+[node name="Tts" type="CheckButton" parent="."]
+layout_mode = 0
+offset_left = 560.0
+offset_top = 288.0
+offset_right = 560.0
+offset_bottom = 288.0
+theme_override_styles/focus = SubResource("StyleBoxFlat_sep1k")
+
+[node name="L_LỜI_BÌNH_TỪ_CLAUDE_(CẦN_ANTHROPIC_API_KEY)" type="Label" parent="."]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 320.0
+offset_right = 170.0
+offset_bottom = 320.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "LỜI BÌNH TỪ CLAUDE (CẦN ANTHROPIC_API_KEY)"
+
+[node name="Llm" type="CheckButton" parent="."]
+layout_mode = 0
+offset_left = 560.0
+offset_top = 316.0
+offset_right = 560.0
+offset_bottom = 316.0
+theme_override_styles/focus = SubResource("StyleBoxFlat_y0fa5")
+
+[node name="Note" type="Label" parent="."]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 348.0
+offset_right = 170.0
+offset_bottom = 348.0
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.8, 0.6, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+
+[node name="Back" type="Button" parent="."]
+layout_mode = 0
+offset_left = 300.0
+offset_top = 404.0
+offset_right = 500.0
+offset_bottom = 436.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_ciubp")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_owsq5")
+theme_override_styles/hover = SubResource("StyleBoxFlat_6rs54")
+theme_override_styles/focus = SubResource("StyleBoxFlat_l8vt3")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_3nwii")
+theme_override_font_sizes/font_size = 18
+text = "LƯU VÀ QUAY LẠI"

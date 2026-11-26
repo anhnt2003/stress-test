@@ -1,0 +1,466 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://game/ui/hud.gd" id="1_eur44"]
+[ext_resource type="FontFile" path="res://fonts/Anton-Regular.ttf" id="2_aco40"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wsmuv"]
+bg_color = Color(0, 0, 0, 0.85)
+border_width_left = 5
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.75, 0.08, 0.05, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_43u44"]
+bg_color = Color(0, 0, 0, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rh2ho"]
+bg_color = Color(0, 0, 0, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_s5jop"]
+bg_color = Color(0, 0, 0, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sw25f"]
+bg_color = Color(0, 0, 0, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.33, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jdyb7"]
+content_margin_left = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 2.0
+bg_color = Color(0.6, 0, 0, 0.1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.85, 0.06, 0.04, 1)
+
+[node name="HUD" type="CanvasLayer"]
+layer = 2
+script = ExtResource("1_eur44")
+
+[node name="Title" type="Label" parent="."]
+offset_left = 14.0
+offset_top = 6.0
+offset_right = 14.0
+offset_bottom = 6.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+
+[node name="Rule" type="Label" parent="."]
+offset_left = 14.0
+offset_top = 30.0
+offset_right = 14.0
+offset_bottom = 30.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 0.8)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+
+[node name="SabHint" type="Label" parent="."]
+offset_left = 14.0
+offset_top = 47.0
+offset_right = 14.0
+offset_bottom = 47.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.85, 0.45, 0.25, 0.85)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+
+[node name="EscHint" type="Label" parent="."]
+offset_left = 716.0
+offset_top = 8.0
+offset_right = 716.0
+offset_bottom = 8.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 0.45)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "ESC: TẠM DỪNG"
+
+[node name="Timer" type="Label" parent="."]
+offset_left = 372.0
+offset_top = 2.0
+offset_right = 372.0
+offset_bottom = 2.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+text = "0:30"
+
+[node name="NetInfo" type="Label" parent="."]
+offset_left = 14.0
+offset_top = 432.0
+offset_right = 14.0
+offset_bottom = 432.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.6, 0.85, 0.6, 0.7)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+
+[node name="SubPanel" type="Panel" parent="."]
+visible = false
+offset_left = 150.0
+offset_top = 368.0
+offset_right = 650.0
+offset_bottom = 393.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_wsmuv")
+
+[node name="Sub" type="Label" parent="SubPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 1.0
+offset_right = 12.0
+offset_bottom = 1.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Cards" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="Card0" type="Panel" parent="Cards"]
+layout_mode = 0
+offset_left = 140.0
+offset_top = 402.0
+offset_right = 264.0
+offset_bottom = 444.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_43u44")
+
+[node name="Chip" type="ColorRect" parent="Cards/Card0"]
+layout_mode = 0
+offset_right = 6.0
+offset_bottom = 42.0
+mouse_filter = 2
+color = Color(0.592, 0.2605, 0.2265, 1)
+
+[node name="Name" type="Label" parent="Cards/Card0"]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 1.0
+offset_right = 13.0
+offset_bottom = 1.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+text = "ĐT-01"
+
+[node name="Val" type="Label" parent="Cards/Card0"]
+layout_mode = 0
+offset_left = 84.0
+offset_top = 1.0
+offset_right = 84.0
+offset_bottom = 1.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Pts" type="Label" parent="Cards/Card0"]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 21.0
+offset_right = 13.0
+offset_bottom = 21.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Dth" type="Label" parent="Cards/Card0"]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 21.0
+offset_right = 70.0
+offset_bottom = 21.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.9, 0.3, 0.25, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Sab" type="ColorRect" parent="Cards/Card0"]
+visible = false
+layout_mode = 0
+offset_left = 116.0
+offset_top = 4.0
+offset_right = 120.0
+offset_bottom = 8.0
+mouse_filter = 2
+color = Color(0.85, 0.45, 0.25, 1)
+
+[node name="Card1" type="Panel" parent="Cards"]
+layout_mode = 0
+offset_left = 272.0
+offset_top = 402.0
+offset_right = 396.0
+offset_bottom = 444.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_rh2ho")
+
+[node name="Chip" type="ColorRect" parent="Cards/Card1"]
+layout_mode = 0
+offset_right = 6.0
+offset_bottom = 42.0
+mouse_filter = 2
+color = Color(0.677, 0.558, 0.252, 1)
+
+[node name="Name" type="Label" parent="Cards/Card1"]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 1.0
+offset_right = 13.0
+offset_bottom = 1.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+text = "ĐT-02"
+
+[node name="Val" type="Label" parent="Cards/Card1"]
+layout_mode = 0
+offset_left = 84.0
+offset_top = 1.0
+offset_right = 84.0
+offset_bottom = 1.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Pts" type="Label" parent="Cards/Card1"]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 21.0
+offset_right = 13.0
+offset_bottom = 21.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Dth" type="Label" parent="Cards/Card1"]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 21.0
+offset_right = 70.0
+offset_bottom = 21.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.9, 0.3, 0.25, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Sab" type="ColorRect" parent="Cards/Card1"]
+visible = false
+layout_mode = 0
+offset_left = 116.0
+offset_top = 4.0
+offset_right = 120.0
+offset_bottom = 8.0
+mouse_filter = 2
+color = Color(0.85, 0.45, 0.25, 1)
+
+[node name="Card2" type="Panel" parent="Cards"]
+layout_mode = 0
+offset_left = 404.0
+offset_top = 402.0
+offset_right = 528.0
+offset_bottom = 444.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_s5jop")
+
+[node name="Chip" type="ColorRect" parent="Cards/Card2"]
+layout_mode = 0
+offset_right = 6.0
+offset_bottom = 42.0
+mouse_filter = 2
+color = Color(0.2945, 0.405, 0.541, 1)
+
+[node name="Name" type="Label" parent="Cards/Card2"]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 1.0
+offset_right = 13.0
+offset_bottom = 1.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+text = "ĐT-03"
+
+[node name="Val" type="Label" parent="Cards/Card2"]
+layout_mode = 0
+offset_left = 84.0
+offset_top = 1.0
+offset_right = 84.0
+offset_bottom = 1.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Pts" type="Label" parent="Cards/Card2"]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 21.0
+offset_right = 13.0
+offset_bottom = 21.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Dth" type="Label" parent="Cards/Card2"]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 21.0
+offset_right = 70.0
+offset_bottom = 21.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.9, 0.3, 0.25, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Sab" type="ColorRect" parent="Cards/Card2"]
+visible = false
+layout_mode = 0
+offset_left = 116.0
+offset_top = 4.0
+offset_right = 120.0
+offset_bottom = 8.0
+mouse_filter = 2
+color = Color(0.85, 0.45, 0.25, 1)
+
+[node name="Card3" type="Panel" parent="Cards"]
+layout_mode = 0
+offset_left = 536.0
+offset_top = 402.0
+offset_right = 660.0
+offset_bottom = 444.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_sw25f")
+
+[node name="Chip" type="ColorRect" parent="Cards/Card3"]
+layout_mode = 0
+offset_right = 6.0
+offset_bottom = 42.0
+mouse_filter = 2
+color = Color(0.3625, 0.49, 0.32, 1)
+
+[node name="Name" type="Label" parent="Cards/Card3"]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 1.0
+offset_right = 13.0
+offset_bottom = 1.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+text = "ĐT-04"
+
+[node name="Val" type="Label" parent="Cards/Card3"]
+layout_mode = 0
+offset_left = 84.0
+offset_top = 1.0
+offset_right = 84.0
+offset_bottom = 1.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Pts" type="Label" parent="Cards/Card3"]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 21.0
+offset_right = 13.0
+offset_bottom = 21.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Dth" type="Label" parent="Cards/Card3"]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 21.0
+offset_right = 70.0
+offset_bottom = 21.0
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.9, 0.3, 0.25, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+
+[node name="Sab" type="ColorRect" parent="Cards/Card3"]
+visible = false
+layout_mode = 0
+offset_left = 116.0
+offset_top = 4.0
+offset_right = 120.0
+offset_bottom = 8.0
+mouse_filter = 2
+color = Color(0.85, 0.45, 0.25, 1)
+
+[node name="Stamp" type="Label" parent="."]
+visible = false
+offset_left = 24.0
+offset_top = 150.0
+offset_right = 24.0
+offset_bottom = 150.0
+rotation = -0.12
+theme_override_styles/normal = SubResource("StyleBoxFlat_jdyb7")
+theme_override_fonts/font = ExtResource("2_aco40")
+theme_override_font_sizes/font_size = 44
+theme_override_colors/font_color = Color(0.85, 0.06, 0.04, 1)
+text = "ĐÃ LOẠI BỎ"
