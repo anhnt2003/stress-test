@@ -1131,13 +1131,10 @@ func _enter_final() -> void:
 		metric.append(-float(totals[i]) * 1000.0 + float(total_deaths[i]))   # bằng điểm thì ai chết ít hơn xếp trên
 	var ranks := _rank(metric)
 	last_rows.clear()
-	var worst := 1
-	for i in 4:
-		worst = maxi(worst, int(ranks[i]))
 	var best := 0
 	var kth := 0
 	for i in 4:
-		var verdict := "ĐƯỢC GIỮ LẠI" if int(ranks[i]) == 1 else ("CHỊU KÈO" if int(ranks[i]) == worst else "LOẠI BỎ")
+		var verdict := "ĐƯỢC GIỮ LẠI" if int(ranks[i]) == 1 else "LOẠI BỎ"
 		last_rows.append({"idx": i, "rank": int(ranks[i]), "detail": "CHẾT %d LẦN" % int(total_deaths[i]), "pts": int(totals[i]), "total": int(totals[i]), "verdict": verdict})
 		if int(ranks[i]) == 1:
 			best = i

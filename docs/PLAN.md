@@ -1,6 +1,6 @@
 # Kế hoạch triển khai — Cơ Sở Kiểm Định Số 9
 
-Party game 3D kinh dị cho 3–4 người: 10 cửa, chấm điểm sau mỗi cửa, chốt điểm cuối trận để "ra kèo".
+Party game 3D kinh dị cho 3–4 người: 10 cửa, chấm điểm sau mỗi cửa, chốt điểm từng người cuối trận.
 Engine: Godot 4.4 (GDScript). Trạng thái hiện tại: bản mẫu một file `main.gd` (~2.800 dòng), 1 người + 3 bot.
 
 ## Hiện có gì
@@ -14,7 +14,7 @@ Engine: Godot 4.4 (GDScript). Trạng thái hiện tại: bản mẫu một file
 
 - Chỉ một người chơi thật. Chưa có nhiều tay cầm, chưa có mạng.
 - Toàn bộ nằm trong một file, cảnh dựng bằng code nên không sửa được trong editor.
-- Chưa có âm thanh, chưa có menu, chưa có nhập kèo.
+- Chưa có âm thanh, chưa có menu.
 - Model là khối cơ bản. Chưa có tương tác giữa người chơi (húc, đẩy, phá nhau).
 
 ## Nguyên tắc
@@ -64,14 +64,13 @@ Xong khi: `main.gd` còn dưới 150 dòng và smoke test trùng kết quả cũ
 - [ ] Màn sảnh: mỗi người bấm nút để vào, chọn mũ và màu áo.
 - [ ] 2–4 tay cầm, cộng một người dùng bàn phím. Ghế trống thì bot ngồi.
 - [ ] Menu chính, tạm dừng, chơi lại.
-- [ ] Nhập kèo trước trận, hiện lại ở bảng tổng kết kèm tên người chịu kèo.
 
 Xong khi: 4 người thật chơi trọn 10 cửa trên một máy. Đây là mốc để thử xem game có vui không.
 
 ## Giai đoạn 3 — Vật lý và tương tác (4–5 ngày)
 
 - [ ] Chuyển nhân vật sang `CharacterBody3D`, va chạm bằng physics engine (Jolt).
-- [ ] Húc/đẩy người khác (nút thứ hai, có hồi chiêu). Đây là thứ tạo ra kèo.
+- [ ] Húc/đẩy người khác (nút thứ hai, có hồi chiêu). Đây là thứ tạo ra kịch tính giữa người chơi.
 - [ ] Ragdoll khi chết thay cho đổ người bằng xoay.
 - [ ] Mỗi cửa một nút "chơi xấu" dùng một lần.
 - [ ] Cân bằng lại 10 cửa sau khi có đẩy nhau.
@@ -98,7 +97,6 @@ Xong khi: 4 máy khác mạng chơi trọn một trận, độ trễ 100 ms vẫ
 - [ ] Bake ánh sáng cho buồng thử. Thêm 2–3 biến thể buồng để đỡ lặp.
 - [ ] Âm thanh: tiếng máy, tiếng chết riêng từng kiểu, nhạc nền công nghiệp, giọng Cỗ Máy.
 - [ ] Lời Cỗ Máy sinh theo diễn biến trận (gọi LLM, có câu dựng sẵn khi mất mạng).
-- [ ] Ảnh "người chịu kèo" tự xuất cuối trận để gửi vào nhóm chat.
 
 ## Giai đoạn 6 — Đóng gói
 

@@ -33,7 +33,7 @@ Bản mẫu để xem chất hình, nhịp chơi và cách tính điểm. Chưa 
 - Sau mỗi cửa: xếp hạng theo số lần chết (ít hơn xếp trên). Bằng nhau thì ai chết lần đầu muộn hơn xếp trên.
   Riêng cửa Sàn cảm ứng xếp theo số ô chiếm được.
 - Hạng 1 / 2 / 3 / 4 được +4 / +3 / +2 / +1 điểm. Đồng hạng thì cùng điểm.
-- Hết 10 cửa: chốt tổng điểm. Bằng điểm thì ai chết ít hơn xếp trên. Hạng 1 "được giữ lại", hạng chót "chịu kèo".
+- Hết 10 cửa: chốt tổng điểm. Bằng điểm thì ai chết ít hơn xếp trên. Hạng 1 "được giữ lại", những người còn lại bị "loại bỏ".
 - Đổi cách cho điểm: sửa `POINTS`, `ROUND_TIME`, `ORDER` ở đầu `main.gd`, và hàm `_end_round()`.
 
 ## Cấu trúc
