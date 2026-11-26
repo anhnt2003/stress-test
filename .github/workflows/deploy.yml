@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 30
     environment:
       name: github-pages
-      url: ${{ steps.pages.outputs.page_url }}
+      url: ${{ steps.pages_try.outputs.page_url || steps.pages_retry.outputs.page_url }}
     defaults:
       run:
         shell: bash
@@ -124,7 +124,19 @@ jobs:
         with:
           path: build/web
 
+      # deploy-pages đôi khi hỏi danh sách artifact ngay sau khi tải lên và chưa thấy ("No artifacts named
+      # github-pages"): đợi một chút rồi thử lại một lần thay vì đánh hỏng cả lần triển khai
       - name: Đưa lên GitHub Pages
-        id: pages
+        id: pages_try
         if: steps.pagescheck.outputs.enabled == 'true'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Chờ artifact hiện ra
+        if: steps.pagescheck.outputs.enabled == 'true' && steps.pages_try.outcome == 'failure'
+        run: sleep 30
+
+      - name: Đưa lên GitHub Pages (thử lại)
+        id: pages_retry
+        if: steps.pagescheck.outputs.enabled == 'true' && steps.pages_try.outcome == 'failure'
         uses: actions/deploy-pages@v4
