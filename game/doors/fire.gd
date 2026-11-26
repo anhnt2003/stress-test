@@ -59,16 +59,16 @@ func setup(level_root: Node3D) -> void:
 		s.brain.off = Vector2(cos(a2), sin(a2))
 
 
-func _flames(k: float) -> void:
+func _flames(k: float, animate := true) -> void:
 	fire_ring.position = Vector3(fire_c.x, PLATFORM_TOP + 0.02, fire_c.y)
 	fire_ring.scale = Vector3(fire_r, 0.3, fire_r)
 	for c in fire_cells:
 		var vis: bool = (c.p as Vector2).distance_to(fire_c) > fire_r + 0.12
 		(c.n as Node3D).visible = vis
-		if vis:
+		if vis and animate:
 			(c.fl as Node3D).scale = Vector3(randf_range(0.7, 1.2), randf_range(0.4, 1.7), randf_range(0.7, 1.2))
 			(c.fl as Node3D).position.y = 0.35 * (c.fl as Node3D).scale.y
-	fire_light.light_energy = 0.8 + 3.5 * k + randf_range(0.0, 0.8)
+	fire_light.light_energy = 0.8 + 3.5 * k + (randf_range(0.0, 0.8) if animate else 0.4)
 
 
 func tick(dt: float) -> void:
@@ -99,8 +99,8 @@ func tick(dt: float) -> void:
 			s.outside_t = 0.0
 
 
-func client_tick(_dt: float) -> void:
-	_flames(k_round())
+func client_tick(dt: float) -> void:
+	_flames(k_round(), dt > 0.0)   # dt = 0: chỉ dựng tư thế, lửa không nhảy
 
 
 func spawn_point() -> Vector3:

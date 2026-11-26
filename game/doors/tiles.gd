@@ -125,7 +125,8 @@ func _animate_tiles(dt: float) -> int:
 			1:
 				tl.timer -= dt
 				var k := 1.0 - float(tl.timer) / 1.4
-				mi.position = (tl.base as Vector3) + Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)) * 0.025 + Vector3(0, -0.05 * k, 0)
+				var shake_v := Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)) * 0.025 if dt > 0.0 else Vector3.ZERO
+				mi.position = (tl.base as Vector3) + shake_v + Vector3(0, -0.05 * k, 0)
 				mt.set_shader_parameter("emit_e", 0.10 + k * 1.1)
 				if tl.timer <= 0.0:
 					tl.state = 2
@@ -151,6 +152,7 @@ func _reset_tiles() -> void:
 		mi.visible = true
 		mi.position = tl.home
 		mi.rotation = Vector3.ZERO
+		mi.reset_physics_interpolation()
 		tl.base = tl.home
 		(tl.body as StaticBody3D).collision_layer = LAYER_FLOOR
 		(tl.mat as ShaderMaterial).set_shader_parameter("base", tl.col)
@@ -294,12 +296,14 @@ func apply_net_state(d: Dictionary) -> void:
 		var tl: Dictionary = tiles[i]
 		if ns == 0 and nh == 1 and int(tl.hp) == 2:
 			_damage(i)
-		elif ns >= 2 and int(tl.state) < 2:
-			# đã rơi hẳn trên máy chủ (người vào sau / lỡ ảnh chụp): ẩn ngay
+		elif ns >= 2 and int(tl.state) == 0:
+			# đã rơi trên máy chủ mà máy này chưa thấy rung (người vào sau / lỡ ảnh chụp): ẩn ngay
 			tl.state = 3
 			tl.hp = 0
 			(tl.mi as Node3D).visible = false
 			(tl.body as StaticBody3D).collision_layer = 0
+		elif ns >= 2 and int(tl.state) == 1:
+			tl.timer = 0.0   # đang rung: cho rơi ngay ở khung sau (vẫn có hoạt cảnh rơi)
 		elif ns == 1 and int(tl.state) == 0:
 			tl.state = 1
 			tl.hp = 0

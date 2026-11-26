@@ -153,13 +153,24 @@ func tick(dt: float) -> void:
 				s.scared = true
 
 
-func client_tick(_dt: float) -> void:
+func client_tick(dt: float) -> void:
+	if dt <= 0.0:
+		_paint_static()   # chỉ dựng tư thế (ngoài lúc thi): không nhấp nháy, không tia lửa
+		return
 	_paint(elec_phase)
 	if elec_phase == 2 and randf() < 0.5:
 		var ri := randi() % elec.size()
 		if elec[ri].hot:
 			var c := elec_center(ri % EW, ri / EW)
 			m.gore.drop(c + Vector3(randf_range(-0.5, 0.5), 0.1, randf_range(-0.5, 0.5)), Vector3(randf_range(-1.5, 1.5), randf_range(2.0, 5.0), randf_range(-1.5, 1.5)), m.gore.spark_mat, false)
+
+
+func _paint_static() -> void:
+	elec_light.light_energy = 3.0 if elec_phase == 2 else 0.0
+	for e in elec:
+		var mt: ShaderMaterial = e.mat
+		mt.set_shader_parameter("emit", Color(0.45, 0.70, 1.0) if elec_phase == 2 else Color(1.0, 0.6, 0.1))
+		mt.set_shader_parameter("emit_e", (1.0 if elec_phase == 2 else 0.4) if e.hot and elec_phase > 0 else 0.0)
 
 
 func ground_y(_p: Vector3) -> float:

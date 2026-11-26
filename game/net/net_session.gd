@@ -105,7 +105,11 @@ func is_client() -> bool:
 func room_text() -> String:
 	if not is_host():
 		return ""
-	return "MÃ PHÒNG: %s   ·   IP %s:%d   ·   %d NGƯỜI QUA MẠNG" % [room_code, RoomCode.local_ipv4(), port, peers.size()]
+	var ips := RoomCode.candidates()
+	var others := ""
+	if ips.size() > 1:   # máy có nhiều mạng: hiện thêm IP khác để người chơi tự thử nếu mã phòng không vào được
+		others = "   ·   IP KHÁC: " + ", ".join(ips.slice(1, 3))
+	return "MÃ PHÒNG: %s   ·   IP %s:%d%s   ·   %d NGƯỜI QUA MẠNG" % [room_code, RoomCode.local_ipv4(), port, others, peers.size()]
 
 
 # =====================================================================
@@ -242,6 +246,9 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 	if peers.has(id):
 		rpc_id(id, "s_welcome", int(peers[id].seat))   # chào lại: không cấp thêm ghế
 		return
+	if token.length() > 64:
+		_reject(id, "DỮ LIỆU VÀO PHÒNG KHÔNG HỢP LỆ.")
+		return
 	var now := Time.get_ticks_msec() / 1000.0
 	var plan := plan_seat(m.seats, peers, dropped, token, now)
 	var seat := int(plan.seat)
@@ -253,7 +260,7 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 		# cùng máy vào lại trước khi máy chủ nhận ra kết nối cũ đã chết: tiếp quản ghế, ngắt kết nối cũ
 		peers.erase(old)
 		_drop_peer(old)
-	var clean := nm.strip_edges().substr(0, 16).to_upper()
+	var clean := sanitize_name(nm)
 	if clean == "":
 		clean = "KHÁCH %d" % (seat + 1)
 	dropped.erase(token)
@@ -282,6 +289,14 @@ func _broadcast(method: String, args: Array) -> void:
 		var pp := peer.get_peer(id) if peer else null
 		if pp and pp.get_state() == ENetPacketPeer.STATE_CONNECTED:
 			callv("rpc_id", [id, method] + args)
+
+
+## Tên người chơi từ máy khách: bỏ ký tự điều khiển (xuống dòng làm vỡ bảng sảnh và nhật ký), tối đa 16 ký tự.
+static func sanitize_name(nm: String) -> String:
+	var out := ""
+	for ch in nm:
+		out += " " if ch.unicode_at(0) < 32 or ch.unicode_at(0) == 127 else ch
+	return out.strip_edges().substr(0, 16).to_upper()
 
 
 ## Từ chối có thông báo, rồi ngắt sau một chút để thông báo kịp tới (máy khách cũng tự rời khi nhận).
@@ -648,7 +663,15 @@ func client_step(dt: float) -> void:
 		# vẫn gửi khi máy chủ dừng (hướng đi rỗng) để máy chủ biết kết nối còn sống
 		rpc_id(1, "c_input", Vector2.ZERO if host_paused else local_move(), _counts)
 	if host_paused:
-		return   # máy chủ dừng: đứng hình, không tự chạy đồng hồ / máy móc / dự đoán
+		# máy chủ dừng: đứng hình, không chạy đồng hồ / máy móc / dự đoán; chỉ đặt mọi người về vị trí
+		# của ảnh chụp mới nhất (người vào lúc đang dừng cũng thấy đúng thế giới)
+		for s in m.subjects:
+			var last := _bufs[s.idx].sample(_bufs[s.idx].latest_time())
+			if last.size() == 2:
+				s.position = last[0]
+				if s.pivot and s.ragdoll == null:
+					s.pivot.rotation.y = float(last[1])
+		return
 	m.t += dt
 	m.state_t += dt
 	if m.state == MatchManager.ST_PLAY:
@@ -704,6 +727,7 @@ func _predict(s: Subject, dt: float) -> void:
 		var err := Vector3(server.x - p.x, 0, server.z - p.z)
 		if err.length() > 1.6:
 			p = server   # lệch quá xa (bị đẩy, băng chuyền...): nhảy về vị trí máy chủ
+			s.reset_physics_interpolation()
 		elif err.length() > 0.35:
 			p += err * minf(1.0, 4.0 * dt)
 		if d.length() < 0.1 and s.pivot:

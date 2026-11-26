@@ -59,6 +59,7 @@ func _arm(w: Dictionary, q: Vector2) -> void:
 	(w.ring as Node3D).position = Vector3(q.x, PLATFORM_TOP, q.y)
 	(w.ring as Node3D).visible = true
 	(w.n as Node3D).position = Vector3(q.x, HANG, q.y)
+	(w.n as Node3D).reset_physics_interpolation()
 
 
 func _free_weight() -> Dictionary:

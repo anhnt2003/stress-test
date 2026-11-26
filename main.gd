@@ -55,6 +55,7 @@ func _ready() -> void:
 	_quit_t = float(cli.quit_after)
 	if cli.balance > 0:
 		frozen = true
+		voice.tts_enabled = false
 		await Balance.run(self, int(cli.balance))
 		get_tree().quit()
 	elif shot:
@@ -68,9 +69,10 @@ func step(dt: float) -> void:
 	presenter.pre_step(dt)
 	if net.is_client():
 		net.client_step(dt)
-	elif not flow.sim_halted():
-		m.step(dt)
-		net.host_step(dt)
+	else:
+		if not flow.sim_halted():
+			m.step(dt)
+		net.host_step(dt)   # cả khi tạm dừng: người vào lúc đó vẫn nhận ảnh chụp, kết nối treo vẫn bị ngắt
 	voice.tick(dt)
 	presenter.post_step(dt)
 	flow.update()

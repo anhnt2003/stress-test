@@ -58,8 +58,8 @@ func boot(cli: Dictionary) -> void:
 	net.autotest = bool(cli.net_test)
 	if int(cli.host) >= 0:
 		host(int(cli.host))
-		if float(cli.autostart) >= 0.0:
-			get_tree().create_timer(float(cli.autostart)).timeout.connect(func(): if m.state == MatchManager.ST_LOBBY: start_match())
+		if float(cli.autostart) >= 0.0 and net.is_host():   # mở phòng thất bại thì không tự chạy trận bot
+			get_tree().create_timer(float(cli.autostart)).timeout.connect(func(): if net.is_host() and m.state == MatchManager.ST_LOBBY: start_match())
 	elif String(cli.join) != "":
 		join(String(cli.join), String(cli.name))
 	elif cli.lobby:

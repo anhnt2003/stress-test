@@ -99,6 +99,15 @@ func run_async(t) -> void:
 	# Máy chủ tạm dừng: máy khách đứng hình, không tự chạy đồng hồ
 	net._apply_load(0, 0, [0, 0, 0, 0], [0, 0, 0, 0])
 	m._set_state(MatchManager.ST_PLAY)
+	# Máy chủ tạm dừng: người vào lúc đó vẫn được đặt về vị trí của ảnh chụp
+	var snap0 := net.snapshot()
+	snap0.t = 50.0
+	snap0.s[0][0] = Vector3(1.5, DoorBase.PLATFORM_TOP, -1.0)
+	net._apply_snap(snap0)
+	net.host_paused = true
+	net.client_step(0.016)
+	t.ok("máy chủ dừng: vị trí theo ảnh chụp mới nhất", m.subjects[0].position.is_equal_approx(Vector3(1.5, DoorBase.PLATFORM_TOP, -1.0)))
+	net.host_paused = false
 	net.host_paused = true
 	var t0 := m.t
 	net.client_step(0.5)
@@ -234,5 +243,27 @@ func run(t) -> void:
 	t.ok("hướng đi NaN bị bỏ", not bad.receive(Vector2(NAN, 0), [0, 0, 0], 1.0) and bad.move == Vector2.ZERO)
 	t.ok("bộ đếm sai kiểu bị bỏ", not bad.receive(Vector2(1, 0), ["a", 0, 0], 1.0) and bad.move == Vector2.ZERO)
 	t.ok("bộ đếm sai độ dài bị bỏ", not bad.receive(Vector2(1, 0), [1], 1.0) and bad.move == Vector2.ZERO)
+	# Mã phòng chọn đúng IP LAN thật, bỏ card ảo / bridge / địa chỉ mạng
+	var mac := [
+		{"name": "bridge102", "friendly": "bridge102", "addresses": ["192.168.155.0"]},
+		{"name": "bridge100", "friendly": "bridge100", "addresses": ["192.168.139.3"]},
+		{"name": "utun3", "friendly": "utun3", "addresses": ["fe80::1"]},
+		{"name": "en0", "friendly": "en0", "addresses": ["fe80::2", "192.168.134.27"]},
+	]
+	t.check("macOS: Wi-Fi thật đứng đầu, bỏ bridge ảo", RoomCode.rank_candidates(mac)[0], "192.168.134.27")
+	t.ok("macOS: không chọn địa chỉ mạng .0", not RoomCode.rank_candidates(mac).has("192.168.155.0"))
+	var win := [
+		{"name": "{A1}", "friendly": "VirtualBox Host-Only Network", "addresses": ["192.168.56.1"]},
+		{"name": "{B2}", "friendly": "Ethernet", "addresses": ["10.0.0.42"]},
+		{"name": "{C3}", "friendly": "vEthernet (Default Switch)", "addresses": ["172.20.144.1"]},
+		{"name": "{D4}", "friendly": "Tailscale", "addresses": ["100.101.102.103"]},
+	]
+	var wr := RoomCode.rank_candidates(win)
+	t.check("Windows: Ethernet thật đứng đầu, rồi VPN LAN", [wr[0], wr[1]], ["10.0.0.42", "100.101.102.103"])
+	t.check("Windows: card ảo xếp cuối", wr.slice(2), ["172.20.144.1", "192.168.56.1"])
+	t.ok("máy này: IP mã phòng không phải địa chỉ mạng", not RoomCode.local_ipv4().ends_with(".0"))
+	# Tên người chơi từ máy khách: bỏ ký tự điều khiển
+	t.check("tên có xuống dòng", NetSession.sanitize_name("a\n\nb\tc"), "A  B C")
+	t.check("tên dài bị cắt", NetSession.sanitize_name("x".repeat(40)).length(), 16)
 	# Ô vào phòng: localhost kèm cổng
 	t.check("localhost:cổng", RoomCode.parse_address("localhost:9000", 24555), {"ip": "127.0.0.1", "port": 9000})

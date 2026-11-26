@@ -13,6 +13,7 @@ var core_cd := 0.0
 var core_wait := 0.0
 var core_phase := 0.0
 var _was_on := false
+var _shown_holder := -1
 
 
 func _init(match_: MatchManager) -> void:
@@ -66,6 +67,9 @@ func _visual(dt: float) -> void:
 		m.play_sfx("beep", -9.0)
 	_was_on = pulse > 0.5
 	core.position = h.position + Vector3(0, 2.28 * Subject.SCALE, 0)
+	if core_holder != _shown_holder:
+		_shown_holder = core_holder
+		core.reset_physics_interpolation()   # lõi chuyền sang người khác: nhảy, không lướt
 	if h.pivot:
 		core.rotation.y = h.yaw()
 	core_mat.emission_energy_multiplier = 0.4 + 6.0 * pulse

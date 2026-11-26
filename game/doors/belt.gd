@@ -83,6 +83,7 @@ func _move_belt(dt: float) -> void:
 		c.position.x += belt_v * dt
 		if c.position.x > BELT_L / 2.0:
 			c.position.x -= BELT_L
+			c.reset_physics_interpolation()   # quay vòng về đầu băng: không vẽ vệt qua giữa băng
 	(shred[0] as Node3D).rotate_object_local(Vector3.UP, dt * 9.0)
 	(shred[1] as Node3D).rotate_object_local(Vector3.UP, -dt * 9.0)
 	var bi := belt_items.size() - 1

@@ -20,6 +20,7 @@ var _voice_id := ""
 var _streak := {}
 var _leader := -1
 var _kills_this_door := 0
+var _final := false
 
 
 func _ready() -> void:
@@ -42,6 +43,8 @@ func pick(arr: Array) -> String:
 
 
 func queue_line(text: String, delay := 0.0, duration := 3.4) -> void:
+	if _final:
+		duration = 999.0   # màn tổng kết: phụ đề phán quyết ở lại tới khi rời màn
 	_queue.append({"t": delay, "text": text, "dur": duration})
 
 
@@ -70,6 +73,7 @@ func tick(dt: float) -> void:
 ## Bỏ hết câu đang chờ và câu LLM đang xin (rời trận, về sảnh, về menu).
 func clear() -> void:
 	_queue.clear()
+	_final = false
 	if llm:
 		llm.cancel()
 	if _voice_id != "" and DisplayServer.get_name() != "headless":
@@ -79,6 +83,7 @@ func clear() -> void:
 # ---------- phản ứng theo diễn biến ----------
 func on_door(m: MatchManager, i: int, door: DoorBase) -> void:
 	_kills_this_door = 0
+	_final = false
 	if i == 0:
 		_streak.clear()
 		_leader = -1
@@ -115,7 +120,8 @@ func on_round_end(m: MatchManager) -> void:
 
 
 func on_final(m: MatchManager, best: int) -> void:
-	queue_line(Lines.final(m.subj_label(m.subjects[best]), rng), 4.0, 5.0)
+	_final = true
+	queue_line(Lines.final(m.subj_label(m.subjects[best]), rng), 4.0)
 	if llm_enabled:
 		llm.request(Lines.prompt_final(m, best))
 

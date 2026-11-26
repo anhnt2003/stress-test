@@ -76,6 +76,7 @@ func _move_zone() -> void:
 			break
 	zone_pos = q
 	zone_node.position = Vector3(q.x, PLATFORM_TOP, q.y)
+	zone_node.reset_physics_interpolation()
 	zone_t = lerpf(5.5, 4.0, k_round())
 	zone_grace = 1.7
 	for s in subjects():
@@ -165,4 +166,8 @@ func net_state() -> Dictionary:
 
 
 func apply_net_state(st: Dictionary) -> void:
-	zone_pos = st.get("z", zone_pos)
+	var z: Vector2 = st.get("z", zone_pos)
+	if z.distance_to(zone_pos) > 0.5:
+		zone_node.position = Vector3(z.x, PLATFORM_TOP, z.y)
+		zone_node.reset_physics_interpolation()
+	zone_pos = z

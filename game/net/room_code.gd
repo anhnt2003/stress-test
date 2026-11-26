@@ -64,24 +64,65 @@ static func parse_address(text: String, default_port: int) -> Dictionary:
 	return decode(t)
 
 
-## Địa chỉ IPv4 trong mạng LAN của máy này (ưu tiên 192.168.x, 10.x, 172.16–31.x, rồi 100.64/10 của Tailscale).
+## Tên card mạng ảo / máy ảo / container / đường hầm: địa chỉ của chúng không ai ở máy khác vào được.
+const VIRTUAL_HINTS := ["bridge", "vbox", "virtualbox", "vmnet", "vmware", "docker", "veth", "virbr", "vethernet",
+	"hyper-v", "default switch", "br-", "lxc", "lxd", "llw", "awdl", "anpi", "ap1", "lo", "gif", "stf", "p2p"]
+## Tên VPN LAN dùng để chơi khác mạng (vẫn hợp lệ, nhưng xếp sau LAN thật).
+const VPN_HINTS := ["tailscale", "zerotier", "zt", "utun", "wg", "tun", "tap"]
+
+
+static func _is_private(a: String) -> bool:
+	var p := a.split(".")
+	return a.begins_with("192.168.") or a.begins_with("10.") or (p[0] == "172" and int(p[1]) >= 16 and int(p[1]) <= 31)
+
+
+static func _is_cgnat(a: String) -> bool:   # 100.64.0.0/10: Tailscale
+	var p := a.split(".")
+	return p[0] == "100" and int(p[1]) >= 64 and int(p[1]) <= 127
+
+
+static func _name_has(name: String, hints: Array) -> bool:
+	var n := name.to_lower()
+	for h in hints:
+		if n.begins_with(h) or (h.length() > 3 and n.contains(h)):
+			return true
+	return false
+
+
+## Xếp hạng địa chỉ IPv4 của các card mạng (dữ liệu dạng IP.get_local_interfaces()). Trả về danh sách
+## tốt nhất trước: LAN thật (Wi-Fi / Ethernet) → VPN LAN → các địa chỉ khác; card ảo chỉ dùng khi không còn gì.
+static func rank_candidates(ifaces: Array) -> Array[String]:
+	var scored: Array = []
+	for it in ifaces:
+		var nm := "%s %s" % [String(it.get("name", "")), String(it.get("friendly", ""))]
+		for a in it.get("addresses", []):
+			var ip := String(a)
+			if ip.count(".") != 3 or ip.begins_with("127.") or ip.begins_with("169.254."):
+				continue
+			if ip.ends_with(".0") or ip.ends_with(".255"):
+				continue   # địa chỉ mạng / broadcast, không phải địa chỉ máy
+			var rank := 4
+			if _name_has(nm, VIRTUAL_HINTS):
+				rank = 9
+			elif _is_cgnat(ip) or _name_has(nm, VPN_HINTS):
+				rank = 2
+			elif _is_private(ip):
+				rank = 0 if ip.begins_with("192.168.") or ip.begins_with("10.") else 1
+			scored.append([rank, ip])
+	scored.sort_custom(func(x, y): return x[0] < y[0] or (x[0] == y[0] and String(x[1]) < String(y[1])))
+	var out: Array[String] = []
+	for e in scored:
+		if not out.has(String(e[1])):
+			out.append(String(e[1]))
+	return out
+
+
+## Các địa chỉ IPv4 người khác có thể dùng để vào phòng, tốt nhất trước.
+static func candidates() -> Array[String]:
+	return rank_candidates(IP.get_local_interfaces())
+
+
+## Địa chỉ IPv4 trong mạng LAN của máy này (dùng để tạo mã phòng).
 static func local_ipv4() -> String:
-	var best := ""
-	var best_rank := 99
-	for a in IP.get_local_addresses():
-		if a.count(".") != 3 or a.begins_with("127.") or a.begins_with("169.254."):
-			continue
-		var p := a.split(".")
-		var rank := 5
-		if a.begins_with("192.168."):
-			rank = 0
-		elif a.begins_with("10."):
-			rank = 1
-		elif p[0] == "172" and int(p[1]) >= 16 and int(p[1]) <= 31:
-			rank = 2
-		elif p[0] == "100" and int(p[1]) >= 64 and int(p[1]) <= 127:
-			rank = 3
-		if rank < best_rank:
-			best_rank = rank
-			best = a
-	return best if best != "" else "127.0.0.1"
+	var c := candidates()
+	return c[0] if c.size() > 0 else "127.0.0.1"
