@@ -595,7 +595,8 @@ func _autotest_step(dt: float) -> void:
 		_test.done = true
 		_test.erase("move")
 		var moved := Vector3(server[0] - _test.start).length()
-		var ok := snaps_received > 30 and loads_received >= 2 and moved > 1.0
+		# loads >= 1: máy khách có thể vào phòng khi trận đã bắt đầu (chỉ nhận lần nạp cửa hiện tại)
+		var ok := snaps_received > 30 and loads_received >= 1 and moved > 1.0
 		print("NETTEST seat=%d snaps=%d loads=%d kills=%d moved=%.2f alive=%s" % [my_seat, snaps_received, loads_received, kills_received, moved, s.alive()])
 		print("NETTEST OK" if ok else "NETTEST FAIL")
 		get_tree().quit(0 if ok else 1)
