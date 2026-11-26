@@ -101,6 +101,7 @@ func start_join(signal_url: String, room: String, peer: WebRTCMultiplayerPeer) -
 
 func stop() -> void:
 	_done = true
+	_retry_at = -1.0
 	if _ws:
 		_ws.close(1000, "bye")
 	conns.clear()
@@ -127,6 +128,8 @@ func _host_url() -> String:
 
 func _process(dt: float) -> void:
 	_t += dt
+	if _done and role == "host":
+		return   # đã dừng (rời phòng): không nối lại, không xử lý gói đến muộn
 	if _ws:
 		var ws := _ws
 		ws.poll()
@@ -209,6 +212,8 @@ func _send(d: Dictionary) -> void:
 
 
 func _on_text(s: String) -> void:
+	if _done or _failed:
+		return
 	var msg = JSON.parse_string(s)
 	if not msg is Dictionary:
 		return
@@ -235,6 +240,7 @@ func _on_text(s: String) -> void:
 			client_ready.emit()
 		"peer":
 			if role == "host":
+				_set_ice(msg.get("ice"))   # mật khẩu TURN mới (phòng mở lâu hơn hạn của mật khẩu cũ)
 				_host_add(int(msg.get("id", 0)))
 		"offer":
 			if role == "join" and from == 1 and not conns.has(1):

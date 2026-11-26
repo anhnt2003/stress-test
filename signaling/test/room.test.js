@@ -79,7 +79,7 @@ test("tạo phòng, người vào nhận id, chủ phòng được báo, trao đ
   const id = j.last().id;
   assert.equal(j.last().t, "id");
   assert.ok(id >= 2);
-  assert.deepEqual(h.last(), { t: "peer", id });
+  assert.deepEqual(h.last(), { t: "peer", id, ice: j.last().ice });
   r.core.message(h, JSON.stringify({ t: "offer", to: id, sdp: "v=0 offer" }));
   assert.deepEqual(j.last(), { t: "offer", to: id, sdp: "v=0 offer", from: 1 });
   r.core.message(j, JSON.stringify({ t: "answer", to: 1, sdp: "v=0 answer" }));
@@ -203,7 +203,8 @@ test("chủ phòng nối lại khi socket cũ còn treo: người vào mới đ�
   assert.equal(h.closed, true, "socket cũ bị đóng");
   const j = r.sock();
   assert.equal(await r.core.join(j), true);
-  assert.deepEqual(h2.last(), { t: "peer", id: j.a.id }, "báo cho socket mới");
+  assert.equal(h2.last().t, "peer", "báo cho socket mới");
+  assert.equal(h2.last().id, j.a.id);
   r.core.message(j, JSON.stringify({ t: "answer", to: 1, sdp: "x" }));
   assert.equal(h2.last().t, "answer");
   await r.core.closed(h); // socket cũ đóng hẳn sau đó: không làm hỏng phòng

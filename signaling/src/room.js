@@ -151,8 +151,9 @@ export class RoomCore {
     let id = 0;
     while (id < 2 || this.find(id)) id = 2 + this.rand(0x7ffffff0);
     ws.setAtt({ role: "join", id, n: 0, at: this.now() });
-    send(ws, { t: "id", id, ice: await iceServers(this.env, this.now()) });
-    send(host, { t: "peer", id });
+    const ice = await iceServers(this.env, this.now());
+    send(ws, { t: "id", id, ice });
+    send(host, { t: "peer", id, ice }); // mật khẩu TURN mới cho cả chủ phòng (phòng mở lâu hơn hạn 4 giờ)
     return true;
   }
 
