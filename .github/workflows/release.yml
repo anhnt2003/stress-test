@@ -22,7 +22,7 @@ jobs:
       # secrets không dùng trực tiếp trong `if:` được, nên đưa vào biến môi trường của job
       BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Tải Godot và export templates
         run: |
@@ -66,14 +66,14 @@ jobs:
 
       - name: Gắn vào GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/*
           generate_release_notes: true
 
       - name: Lưu bản build (chạy tay)
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: stress-test-builds
           path: dist/*

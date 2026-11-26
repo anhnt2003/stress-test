@@ -39,12 +39,12 @@ jobs:
       # còn token chỉ có trong hai bước cần nó
       HAS_CLOUDFLARE: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # workflow_run chạy trên nhánh mặc định: lấy đúng commit CI vừa kiểm thử
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: env.HAS_CLOUDFLARE == 'true'
         with:
           node-version: 22
@@ -78,7 +78,7 @@ jobs:
 
       - name: Export template cho web (lưu cache, khỏi tải lại 1 GB mỗi lần)
         id: tpl
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
           key: godot-web-templates-${{ env.GODOT_VERSION }}
@@ -99,7 +99,6 @@ jobs:
           mkdir -p build/web
           godot --headless --path . --export-release "Web" build/web/index.html 2>&1 | tee export.log
           test -f build/web/index.wasm && test -f build/web/index.pck
-          touch build/web/.nojekyll
           ls -la build/web
 
       - name: Kiểm tra GitHub Pages đã bật chưa
@@ -116,10 +115,10 @@ jobs:
             echo "enabled=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
         if: steps.pagescheck.outputs.enabled == 'true'
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         if: steps.pagescheck.outputs.enabled == 'true'
         with:
           path: build/web
@@ -130,7 +129,7 @@ jobs:
         id: pages_try
         if: steps.pagescheck.outputs.enabled == 'true'
         continue-on-error: true
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
       - name: Chờ artifact hiện ra
         if: steps.pagescheck.outputs.enabled == 'true' && steps.pages_try.outcome == 'failure'
@@ -139,4 +138,4 @@ jobs:
       - name: Đưa lên GitHub Pages (thử lại)
         id: pages_retry
         if: steps.pagescheck.outputs.enabled == 'true' && steps.pages_try.outcome == 'failure'
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
