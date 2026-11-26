@@ -47,7 +47,7 @@ static func parse_address(text: String, default_port: int) -> Dictionary:
 	var t := text.strip_edges()
 	if t == "":
 		return {}
-	if t.count(".") == 3 or t == "localhost":
+	if t.count(".") == 3 or t.get_slice(":", 0) == "localhost":
 		var host := t
 		var port := default_port
 		if t.contains(":"):

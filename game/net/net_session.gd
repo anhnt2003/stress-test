@@ -16,6 +16,8 @@ const INTERP_DELAY := 0.1
 const PROTOCOL := "stress-test-net-2"
 const MODES := ["", "crush", "grind", "halved", "burst", "headpop", "fry"]
 const ACTIONS := ["jump", "shove", "sabotage"]
+## Kết nối cũ cùng token im lặng quá lâu thì coi là đã chết (máy khách gửi input 30 lần/giây).
+const STALE_AFTER := 1.5
 
 signal status_changed(text: String)
 signal left(reason: String)
@@ -57,7 +59,11 @@ var autotest := false
 var peers := {}      # peer_id -> {"seat", "name", "token"}
 var dropped := {}    # token -> ghế cũ (rớt mạng, chờ vào lại)
 var _snap_acc := 0.0
-var _links: Array = []   # [signal, callable] đã nối vào MatchManager
+var _links: Array = []
+## Máy chủ đang tạm dừng (máy chủ: trạng thái của chính nó; máy khách: theo sự kiện từ máy chủ).
+var host_paused := false
+## Máy khách: menu đang mở thì không gửi hướng đi (phím dùng để chọn menu không được lái nhân vật).
+var input_blocked := false   # [signal, callable] đã nối vào MatchManager
 
 # máy khách
 var my_seat := -1
@@ -146,6 +152,7 @@ func join(address: String, nm: String, match_: MatchManager, s: Settings) -> int
 	_counts = [0, 0, 0]
 	_input_acc = 0.0
 	_test = {}
+	host_paused = false
 	snaps_received = 0
 	loads_received = 0
 	kills_received = 0
@@ -181,6 +188,7 @@ func close() -> void:
 	_bufs.clear()
 	_have_offset = false
 	my_seat = -1
+	host_paused = false
 
 
 func _leave(reason: String) -> void:
@@ -207,7 +215,8 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 	if peers.has(id):
 		rpc_id(id, "s_welcome", int(peers[id].seat))   # chào lại: không cấp thêm ghế
 		return
-	var plan := plan_seat(m.seats, peers, dropped, token)
+	var now := Time.get_ticks_msec() / 1000.0
+	var plan := plan_seat(m.seats, peers, dropped, token, now)
 	var seat := int(plan.seat)
 	if seat < 0:
 		rpc_id(id, "s_reject", "PHÒNG ĐÃ ĐỦ 4 NGƯỜI.")
@@ -217,13 +226,13 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 		# cùng máy vào lại trước khi máy chủ nhận ra kết nối cũ đã chết: tiếp quản ghế, ngắt kết nối cũ
 		peers.erase(old)
 		if peer:
-			peer.disconnect_peer(old)
+			peer.disconnect_peer(old, true)   # ngắt ngay để không gửi gói tới kết nối đang đóng
 	var clean := nm.strip_edges().substr(0, 16).to_upper()
 	if clean == "":
 		clean = "KHÁCH %d" % (seat + 1)
 	dropped.erase(token)
 	m.seats.assign(seat, NetSource.new(id, clean), clean)
-	peers[id] = {"seat": seat, "name": clean, "token": token}
+	peers[id] = {"seat": seat, "name": clean, "token": token, "seen": now}
 	rpc_id(id, "s_welcome", seat)
 	_send_lobby()
 	# đưa máy khách vào đúng cảnh đang chạy
@@ -238,18 +247,23 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 				best = int(r.idx)
 				break
 		rpc_id(id, "s_final", m.last_rows, best, m.totals, m.total_deaths)
+	if host_paused:
+		rpc_id(id, "s_event", "pause", [true])
 	if m.state != MatchManager.ST_LOBBY:
 		m.announce("%s VÀO THAY ĐỐI TƯỢNG %s." % [clean, m.seats.looks[seat].label])
 	status_changed.emit("%s ĐÃ VÀO PHÒNG (ĐỐI TƯỢNG %s)." % [clean, m.seats.looks[seat].label])
 
 
 ## Chọn ghế cho người vừa vào. Trả về {"seat": ghế (-1 nếu đầy), "takeover": peer cũ cần ngắt (0 nếu không)}.
-## Thứ tự: ghế của kết nối cũ cùng token (chưa bị phát hiện mất) → ghế cũ đang chờ vào lại → ghế bot đầu tiên.
-static func plan_seat(seats: Seats, peers_: Dictionary, dropped_: Dictionary, token: String) -> Dictionary:
+## Thứ tự: ghế của kết nối cũ cùng token đã im lặng quá STALE_AFTER giây (máy chủ chưa kịp phát hiện mất)
+## → ghế cũ đang chờ vào lại → ghế bot đầu tiên. Kết nối cùng token mà vẫn đang gửi input (hai bản game
+## trên cùng một máy dùng chung file cài đặt) thì không bị đá: người mới nhận ghế khác.
+static func plan_seat(seats: Seats, peers_: Dictionary, dropped_: Dictionary, token: String, now: float) -> Dictionary:
 	if token != "":
 		for pid in peers_:
-			if String(peers_[pid].token) == token:
-				return {"seat": int(peers_[pid].seat), "takeover": int(pid)}
+			var p: Dictionary = peers_[pid]
+			if String(p.token) == token and now - float(p.get("seen", -INF)) > STALE_AFTER:
+				return {"seat": int(p.seat), "takeover": int(pid)}
 	return {"seat": assign_seat(seats, dropped_, token), "takeover": 0}
 
 
@@ -285,9 +299,11 @@ func c_input(mv: Vector2, counts: Array) -> void:
 	var id := multiplayer.get_remote_sender_id()
 	if not peers.has(id):
 		return
+	var now := Time.get_ticks_msec() / 1000.0
+	peers[id].seen = now
 	var src := m.seats.source(int(peers[id].seat))
 	if src is NetSource and (src as NetSource).peer == id:
-		(src as NetSource).receive(mv, counts, Time.get_ticks_msec() / 1000.0)
+		(src as NetSource).receive(mv, counts, now)
 
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -326,12 +342,17 @@ func broadcast_lobby() -> void:
 
 
 func notify_pause(paused: bool) -> void:
-	if is_host():
-		rpc("s_event", "pause", [paused])
+	if not is_host():
+		return
+	host_paused = paused
+	if not paused:
+		m.seats.clear_inputs()   # nút máy khách bấm trong lúc dừng không được nổ ra khi chơi tiếp
+	rpc("s_event", "pause", [paused])
 
 
 static func pack_flags(s: Subject) -> int:
-	return int(s.ground) | int(s.moving) << 1 | int(s.scared) << 2 | int(s.shove_t > 0.0) << 3 | int(s.sabotage_used) << 4
+	return int(s.ground) | int(s.moving) << 1 | int(s.scared) << 2 | int(s.shove_t > 0.0) << 3 | int(s.sabotage_used) << 4 \
+		| int(s.stun > 0.0 or s.flat > 0.0 or s.knock.length() > 0.5) << 5
 
 
 func snapshot() -> Dictionary:
@@ -465,7 +486,8 @@ func _apply_event(kind: String, args: Array) -> void:
 				m.subjects[idx].sabotage_used = true
 				m.sabotaged.emit(m.subjects[idx], String(args[1]))
 		"pause":
-			status_changed.emit("MÁY CHỦ ĐÃ TẠM DỪNG." if bool(args[0]) else "MÁY CHỦ CHƠI TIẾP.")
+			host_paused = bool(args[0])
+			status_changed.emit("MÁY CHỦ ĐÃ TẠM DỪNG." if host_paused else "MÁY CHỦ CHƠI TIẾP.")
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -518,6 +540,7 @@ func _apply_snap(d: Dictionary) -> void:
 		s.scared = f & 4 != 0
 		s.shove_t = 0.25 if f & 8 != 0 else 0.0
 		s.sabotage_used = f & 16 != 0
+		s.stun = 0.1 if f & 32 != 0 else 0.0   # máy khách chỉ dùng để tạm dừng dự đoán
 		s.deaths = int(e[3])
 		s.score = int(e[4])
 		s.doom = float(e[5])
@@ -549,6 +572,8 @@ func client_step(dt: float) -> void:
 		(_lag_q.pop_front()[1] as Callable).call()
 	if not is_client() or m == null or m.door == null or _bufs.size() < Seats.N:
 		return
+	if host_paused:
+		return   # máy chủ dừng: đứng hình, không tự chạy đồng hồ / máy móc / dự đoán
 	m.t += dt
 	m.state_t += dt
 	if m.state == MatchManager.ST_PLAY:
@@ -580,6 +605,8 @@ func client_step(dt: float) -> void:
 
 ## Hướng đi của người chơi tại máy này (mọi bàn phím / tay cầm đều điều khiển cùng một ghế), toạ độ thế giới.
 func local_move() -> Vector2:
+	if input_blocked:
+		return Vector2.ZERO
 	var mv := Vector2.ZERO
 	for src in _local:
 		mv += src.raw_move()
@@ -591,9 +618,10 @@ func local_move() -> Vector2:
 
 ## Dự đoán nhân vật của chính mình: đi ngay theo input, rồi kéo dần về vị trí máy chủ nếu lệch nhiều.
 func _predict(s: Subject, dt: float) -> void:
-	var mv := local_move()
+	var mv := local_move() if s.stun <= 0.0 else Vector2.ZERO   # bị xô / khựng: để máy chủ dẫn
 	var d := Vector3(mv.x, 0, mv.y)
-	var p := s.position + d * Subject.BASE_SPEED * dt
+	var spd := 4.1 if m.door.led_alarm(s) else Subject.BASE_SPEED   # người giữ lõi nổ đi nhanh hơn
+	var p := s.position + d * spd * dt
 	if s.ground:
 		p += m.door.surface_velocity(s) * dt
 	p = m.door.constrain(s, p)

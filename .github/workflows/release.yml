@@ -12,6 +12,7 @@ permissions:
 jobs:
   export:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       GODOT_VERSION: 4.4.1
       # secrets không dùng trực tiếp trong `if:` được, nên đưa vào biến môi trường của job
@@ -34,7 +35,9 @@ jobs:
         run: godot --headless --path . --import
 
       - name: Kiểm thử trước khi xuất
-        run: godot --headless --path . --script res://tests/run_all.gd
+        run: |
+          godot --headless --path . --script res://tests/run_all.gd 2>&1 | tee tests.log
+          if grep -q "SCRIPT ERROR" tests.log; then echo "::error::Có lỗi script khi chạy kiểm thử"; exit 1; fi
 
       - name: Xuất bản build
         run: |
@@ -63,7 +66,7 @@ jobs:
           path: dist/*
 
       - name: Đẩy lên itch.io (nếu đã cấu hình BUTLER_API_KEY và ITCH_TARGET)
-        if: startsWith(github.ref, 'refs/tags/') && env.BUTLER_API_KEY != ''
+        if: startsWith(github.ref, 'refs/tags/') && env.BUTLER_API_KEY != '' && vars.ITCH_TARGET != ''
         env:
           ITCH_TARGET: ${{ vars.ITCH_TARGET }}
         run: |
@@ -71,4 +74,4 @@ jobs:
           unzip -q butler.zip -d butler && chmod +x butler/butler
           ./butler/butler push build/windows "${ITCH_TARGET}:windows" --userversion "${GITHUB_REF_NAME}"
           ./butler/butler push build/linux "${ITCH_TARGET}:linux" --userversion "${GITHUB_REF_NAME}"
-          ./butler/butler push build/macos "${ITCH_TARGET}:mac" --userversion "${GITHUB_REF_NAME}"
+          ./butler/butler push build/macos/StressTest.zip "${ITCH_TARGET}:mac" --userversion "${GITHUB_REF_NAME}"

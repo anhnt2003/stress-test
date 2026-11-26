@@ -162,6 +162,8 @@ func kill(s: Subject, mode: String, dir := Vector3.ZERO, count := true) -> void:
 
 ## Phần hình ảnh của một lần chết (máy chủ và máy khách cùng chạy).
 func kill_fx(s: Subject, mode: String, dir: Vector3, pos: Vector3) -> void:
+	if s.pivot:
+		s.pivot.visible = true   # máy khách có thể đã ẩn hình nhân theo ảnh chụp trước khi RPC chết tới
 	s.out = maxf(s.out, 3.0)
 	s.dead_mode = mode
 	s.dead_t = 0.0

@@ -14,6 +14,20 @@ func run_async(t) -> void:
 	t.ok("vào sảnh khi chưa nạp sảnh thì nạp sảnh", app.m.door != null and app.m.subjects.size() == 4)
 	app.flow.change_look(0, 1, 0)
 	t.check("đổi mũ ở sảnh dựng lại hình nhân", app.m.subjects[0].look.hat, 1)
+	# Menu tạm dừng mở khi máy chủ đưa về sảnh: vẫn đóng được
+	app.flow.paused = true
+	app.menus.pause_menu.open(true)
+	app.flow.toggle_pause()
+	t.ok("ở sảnh vẫn đóng được menu tạm dừng đang mở", not app.flow.paused and not app.menus.pause_menu.visible)
+	app.flow.toggle_pause()
+	t.ok("ở sảnh không mở menu tạm dừng mới", not app.flow.paused)
+	# Tổng kết: bấm A / Enter ngay khi hết trận không bỏ qua bảng xếp hạng
+	app.m._set_state(MatchManager.ST_FINAL)
+	app.flow._on_start()
+	t.check("vừa vào tổng kết: chưa cho chơi lại", app.m.state, MatchManager.ST_FINAL)
+	app.m.state_t = 5.0
+	app.flow._on_start()
+	t.check("bảng đã hiện: chơi lại được", app.m.state, MatchManager.ST_INTRO)
 	app.queue_free()
 	await t.process_frame
 
@@ -53,22 +67,49 @@ func run_async(t) -> void:
 	var err := net.join("127.0.0.1:24999", "x", m, Settings.new())
 	t.check("vào phòng thành công (đang kết nối)", err, OK)
 	t.check("bộ đếm nút bấm về 0 khi vào phòng", net._counts, [0, 0, 0])
+	# Máy chủ tạm dừng: máy khách đứng hình, không tự chạy đồng hồ
+	net._apply_load(0, 0, [0, 0, 0, 0], [0, 0, 0, 0])
+	m._set_state(MatchManager.ST_PLAY)
+	net.host_paused = true
+	var t0 := m.t
+	net.client_step(0.5)
+	t.check("máy chủ dừng: đồng hồ máy khách không chạy", m.t, t0)
+	net.host_paused = false
+	net.client_step(0.5)
+	t.ok("máy chủ chơi tiếp: đồng hồ chạy lại", m.t > t0)
+	# Menu đang mở: không gửi hướng đi
+	net._test.move = Vector2(1, 0)
+	net.input_blocked = true
+	t.check("menu mở: không lái nhân vật", net.local_move(), Vector2.ZERO)
+	net.input_blocked = false
+	t.ok("menu đóng: lái được", net.local_move().length() > 0.9)
+	net._test.erase("move")
 	net.close()
 	t.ok("rời phòng thì hết chế độ máy khách", not m.remote and not net.is_online())
+	# Lưỡi cưa trên máy khách quay tiếp giữa hai ảnh chụp
+	m.load_door(2, false)
+	var saw := m.door
+	saw.arm_speed = 2.0
+	var a0: float = saw.arm_angle
+	saw.client_tick(0.05)
+	t.ok("tay cưa máy khách quay giữa hai ảnh chụp", is_equal_approx(saw.arm_angle, a0 + 0.1))
 	net.queue_free()
 	m.queue_free()
 	await t.process_frame
 
 
 func run(t) -> void:
-	# c_hello lặp lại / vào lại trước khi máy chủ phát hiện mất kết nối
+	# c_hello lặp lại / vào lại trước khi máy chủ phát hiện mất kết nối / hai bản game cùng máy (cùng token)
 	var seats := Seats.new()
 	seats.assign(2, NetSource.new(77, "A"), "A")
-	var peers := {77: {"seat": 2, "name": "A", "token": "tok"}}
-	t.check("cùng token khi kết nối cũ còn: tiếp quản ghế cũ", NetSession.plan_seat(seats, peers, {}, "tok"), {"seat": 2, "takeover": 77})
-	t.check("token khác: ghế bot đầu tiên", NetSession.plan_seat(seats, peers, {}, "khác"), {"seat": 0, "takeover": 0})
-	t.check("token rỗng không tiếp quản", NetSession.plan_seat(seats, {77: {"seat": 2, "name": "A", "token": ""}}, {}, ""), {"seat": 0, "takeover": 0})
-	t.check("đang chờ vào lại: ghế cũ", NetSession.plan_seat(seats, {}, {"x": 3}, "x"), {"seat": 3, "takeover": 0})
+	var now := 100.0
+	var stale := {77: {"seat": 2, "name": "A", "token": "tok", "seen": now - 5.0}}
+	var live := {77: {"seat": 2, "name": "A", "token": "tok", "seen": now - 0.2}}
+	t.check("cùng token, kết nối cũ đã im lặng: tiếp quản ghế cũ", NetSession.plan_seat(seats, stale, {}, "tok", now), {"seat": 2, "takeover": 77})
+	t.check("cùng token, kết nối cũ vẫn gửi input: không đá, cấp ghế khác", NetSession.plan_seat(seats, live, {}, "tok", now), {"seat": 0, "takeover": 0})
+	t.check("token khác: ghế bot đầu tiên", NetSession.plan_seat(seats, stale, {}, "khác", now), {"seat": 0, "takeover": 0})
+	t.check("token rỗng không tiếp quản", NetSession.plan_seat(seats, {77: {"seat": 2, "name": "A", "token": "", "seen": 0.0}}, {}, "", now), {"seat": 0, "takeover": 0})
+	t.check("đang chờ vào lại: ghế cũ", NetSession.plan_seat(seats, {}, {"x": 3}, "x", now), {"seat": 3, "takeover": 0})
 	# Cài đặt: kéo thanh âm lượng không đụng tới cửa sổ
 	var st := Settings.new()
 	t.ok("lần đầu phải áp cửa sổ", st.window_changed())
@@ -77,3 +118,5 @@ func run(t) -> void:
 	t.ok("đổi âm lượng không áp lại cửa sổ", not st.window_changed())
 	st.resolution = 0
 	t.ok("đổi độ phân giải thì áp lại cửa sổ", st.window_changed())
+	# Ô vào phòng: localhost kèm cổng
+	t.check("localhost:cổng", RoomCode.parse_address("localhost:9000", 24555), {"ip": "127.0.0.1", "port": 9000})

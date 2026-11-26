@@ -7,6 +7,7 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       GODOT_VERSION: 4.4.1
     steps:
@@ -26,7 +27,10 @@ jobs:
           if grep -q "SCRIPT ERROR" import.log; then echo "::error::Có lỗi script khi import"; exit 1; fi
 
       - name: Kiểm thử (tính điểm, ghế, cài đặt, Cỗ Máy, 10 cửa, mạng)
-        run: godot --headless --path . --script res://tests/run_all.gd
+        run: |
+          godot --headless --path . --script res://tests/run_all.gd 2>&1 | tee tests.log
+          # lỗi runtime chỉ huỷ hàm đang chạy nên có thể vẫn in "ok": bắt cả SCRIPT ERROR
+          if grep -q "SCRIPT ERROR" tests.log; then echo "::error::Có lỗi script khi chạy kiểm thử"; exit 1; fi
 
       - name: Chạy thử cả trận 10 cửa (bot, có chơi xấu)
         run: |
@@ -43,3 +47,5 @@ jobs:
           wait
           grep -q "NETTEST OK" client.log
           if grep -q "SCRIPT ERROR" host.log client.log; then echo "::error::Có lỗi script khi chơi qua mạng"; exit 1; fi
+          # lỗi engine (ví dụ gửi gói tới kết nối đã đóng), trừ cảnh báo rò tài nguyên lúc thoát của engine
+          if grep "ERROR:" host.log client.log | grep -vq "resources still in use at exit"; then echo "::error::Có lỗi engine khi chơi qua mạng"; exit 1; fi

@@ -11,6 +11,7 @@ var net: NetSession
 var settings: Settings
 var paused := false
 var _settings_from := ""
+const FINAL_LOCK := 3.6
 
 
 func setup(a: Node) -> void:
@@ -104,7 +105,8 @@ func restart() -> void:
 
 
 func toggle_pause() -> void:
-	if m.state == MatchManager.ST_LOBBY or menus.main_menu.visible:
+	# ở sảnh / menu chính thì không mở menu tạm dừng, nhưng menu đang mở (máy chủ vừa đưa về sảnh) vẫn đóng được
+	if not paused and (m.state == MatchManager.ST_LOBBY or menus.main_menu.visible):
 		return
 	paused = not paused
 	if paused:
@@ -122,6 +124,7 @@ func sim_halted() -> bool:
 func update() -> void:
 	presenter.paused = paused
 	presenter.menu_open = menus.main_menu.visible or menus.overlay_open()
+	net.input_blocked = paused or presenter.menu_open
 	if menus.overlay_open():
 		router.screen = "overlay"
 	elif menus.main_menu.visible:
@@ -139,6 +142,9 @@ func update() -> void:
 # ---------- phản hồi input ----------
 func _on_start() -> void:
 	if net.is_client():
+		return
+	# bảng tổng kết hiện sau 3,4 giây: chưa hiện thì chưa cho chơi lại (khỏi lỡ tay bấm A khi đang nhảy)
+	if m.state == MatchManager.ST_FINAL and m.state_t < FINAL_LOCK:
 		return
 	if m.state == MatchManager.ST_LOBBY or m.state == MatchManager.ST_FINAL:
 		start_match()

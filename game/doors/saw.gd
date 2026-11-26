@@ -86,6 +86,7 @@ func tick(dt: float) -> void:
 
 
 func client_tick(dt: float) -> void:
+	arm_angle += arm_speed * dt   # quay tiếp giữa hai ảnh chụp (20 lần/giây), ảnh chụp sau hiệu chỉnh lại
 	arm_root.rotation.y = arm_angle
 	for sw in saws:
 		sw.rotate_object_local(Vector3.UP, dt * 25.0)
