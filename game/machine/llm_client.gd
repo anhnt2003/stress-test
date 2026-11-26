@@ -29,6 +29,13 @@ func available() -> bool:
 	return _key != ""
 
 
+## Huỷ yêu cầu đang chạy (câu trả lời về sau sẽ không được dùng).
+func cancel() -> void:
+	if _busy and _http:
+		_http.cancel_request()
+	_busy = false
+
+
 ## Gửi một câu nhắc. Nếu đang có yêu cầu khác chạy dở thì bỏ qua (không xếp hàng).
 func request(prompt: String) -> void:
 	if _busy or not available():

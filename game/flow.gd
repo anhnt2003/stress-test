@@ -80,6 +80,7 @@ func apply_settings() -> void:
 # ---------- các màn ----------
 func show_menu() -> void:
 	paused = false
+	app.voice.clear()
 	net.close()
 	m.seats = Seats.new()
 	router.seats = m.seats
@@ -97,6 +98,7 @@ func _unpause() -> void:
 
 func enter_lobby() -> void:
 	_unpause()
+	app.voice.clear()
 	menus.hide_all()
 	# lúc mới khởi động MatchManager đã ở ST_LOBBY nhưng chưa nạp sảnh (door == null)
 	if m.door == null or m.state != MatchManager.ST_LOBBY:
@@ -286,7 +288,8 @@ func join(address: String, player_name: String) -> void:
 	var err := net.join(address, settings.player_name if settings.player_name != "" else "KHÁCH", m, settings)
 	if err != OK:
 		menus.join_dialog.open(address, player_name)
-		menus.join_dialog.set_status("MÃ PHÒNG / ĐỊA CHỈ KHÔNG HỢP LỆ.")
+		menus.join_dialog.set_status("MÃ PHÒNG / ĐỊA CHỈ KHÔNG HỢP LỆ." if err == ERR_INVALID_PARAMETER
+			else "KHÔNG TẠO ĐƯỢC KẾT NỐI MẠNG (LỖI %d). THỬ LẠI SAU." % err)
 		return
 	menus.join_dialog.set_status("ĐANG KẾT NỐI...")
 

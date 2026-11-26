@@ -37,6 +37,7 @@ func frame(b: Vector3, l: Vector3) -> void:
 	look = l
 	position = base
 	look_at(look)
+	reset_physics_interpolation()   # đổi cửa: nhảy cảnh, không lướt camera
 
 
 func kick(amount: float) -> void:

@@ -285,6 +285,7 @@ func _place_respawn(s: Subject, pos: Vector3) -> void:
 		if corpses.size() > 7:
 			(corpses.pop_front() as Node3D).queue_free()
 	s.position = pos
+	s.reset_physics_interpolation()   # thả từ trần: không kéo vệt từ chỗ chết tới chỗ thả
 	s.build_model()
 	s.out = 0.0
 	s.knock = Vector3.ZERO

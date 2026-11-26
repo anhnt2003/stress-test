@@ -294,7 +294,13 @@ func apply_net_state(d: Dictionary) -> void:
 		var tl: Dictionary = tiles[i]
 		if ns == 0 and nh == 1 and int(tl.hp) == 2:
 			_damage(i)
-		elif ns >= 1 and int(tl.state) == 0:
+		elif ns >= 2 and int(tl.state) < 2:
+			# đã rơi hẳn trên máy chủ (người vào sau / lỡ ảnh chụp): ẩn ngay
+			tl.state = 3
+			tl.hp = 0
+			(tl.mi as Node3D).visible = false
+			(tl.body as StaticBody3D).collision_layer = 0
+		elif ns == 1 and int(tl.state) == 0:
 			tl.state = 1
 			tl.hp = 0
 			tl.timer = 1.4

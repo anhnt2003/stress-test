@@ -52,7 +52,7 @@ func speak(text: String) -> void:
 		DisplayServer.tts_speak(text.to_lower(), _voice_id, clampi(tts_volume, 0, 100), 0.55, 1.05)
 	elif tts_enabled and audio:
 		for k in mini(4, 1 + text.length() / 14):   # không có giọng: vài tiếng bíp kiểu máy
-			get_tree().create_timer(0.09 * k).timeout.connect(func(): audio.sfx("blip", -12.0, 0.8 + 0.1 * k))
+			get_tree().create_timer(0.09 * k).timeout.connect(func(): audio.voice_blip(0.8 + 0.1 * k))
 
 
 func tick(dt: float) -> void:
@@ -67,8 +67,13 @@ func tick(dt: float) -> void:
 			i += 1
 
 
+## Bỏ hết câu đang chờ và câu LLM đang xin (rời trận, về sảnh, về menu).
 func clear() -> void:
 	_queue.clear()
+	if llm:
+		llm.cancel()
+	if _voice_id != "" and DisplayServer.get_name() != "headless":
+		DisplayServer.tts_stop()
 
 
 # ---------- phản ứng theo diễn biến ----------

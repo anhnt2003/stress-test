@@ -128,8 +128,12 @@ func run_async(t) -> void:
 	net.input_blocked = false
 	t.ok("menu đóng: lái được", net.local_move().length() > 0.9)
 	net._test.erase("move")
+	# Rời phòng: luật của máy chủ (chơi xấu, seed) không còn dính lại
+	net._apply_lobby({"looks": m.seats.looks, "labels": ["", "", "", ""], "bots": [true, true, true, true], "names": ["", "", "", ""], "sab": false})
+	net._apply_load(0, 777, [0, 0, 0, 0], [0, 0, 0, 0])
 	net.close()
 	t.ok("rời phòng thì hết chế độ máy khách", not m.remote and not net.is_online())
+	t.ok("rời phòng: chơi xấu và seed trở về như trước khi vào", m.sabotage_enabled and m.seed_base == 0)
 	# Lưỡi cưa trên máy khách quay tiếp giữa hai ảnh chụp
 	m.load_door(2, false)
 	var saw := m.door
@@ -150,6 +154,23 @@ func run_async(t) -> void:
 	t.check("giới thiệu cửa: tay cưa máy khách đứng yên", m.door.arm_angle, a1)
 	net2.mode = ""
 	net2.queue_free()
+	m.remote = false
+	# Người vào lúc chấm điểm ở sàn nghiền thấy đúng các ô đã rơi
+	m.load_door(6, false)
+	var net3 := NetSession.new()
+	t.root.add_child(net3)
+	net3.m = m
+	net3.mode = "client"
+	net3._apply_load(6, 0, [0, 0, 0, 0], [0, 0, 0, 0])
+	m._set_state(MatchManager.ST_RESULT)
+	var st0 := PackedByteArray()
+	st0.resize(m.door.tiles.size())
+	st0[10] = 3 * 4   # ô 10 đã rơi hẳn trên máy chủ
+	var sn := {"t": 5.0, "lt": 30.0, "stt": 1.0, "d": 6, "s": [], "x": {"t": st0}}
+	net3._apply_snap(sn)
+	t.ok("ô đã rơi trên máy chủ thì ẩn ngay ở máy khách", not (m.door.tiles[10].mi as Node3D).visible)
+	net3.mode = ""
+	net3.queue_free()
 	m.remote = false
 	# Collider của máy ép đi theo máy ép (không nằm lại giữa sàn)
 	m.load_door(0, false)

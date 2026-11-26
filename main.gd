@@ -127,6 +127,7 @@ func _finish_shot() -> void:
 		presenter.cam.fov = 32.0
 		presenter.cam.position = Vector3(0.0, 1.9, 4.6)
 		presenter.cam.look_at(Vector3(0.0, 1.4, 0.6))
+		presenter.cam.reset_physics_interpolation()
 	if DisplayServer.get_name() == "headless":
 		get_tree().quit()
 	else:

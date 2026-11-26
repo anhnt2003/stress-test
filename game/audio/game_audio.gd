@@ -13,6 +13,7 @@ var players: Array[AudioStreamPlayer] = []
 var next_player := 0
 var music: AudioStreamPlayer
 var hum_player: AudioStreamPlayer
+var voice_player: AudioStreamPlayer
 var rng := RandomNumberGenerator.new()
 
 
@@ -35,6 +36,9 @@ func _ready() -> void:
 		p.bus = "SFX"
 		add_child(p)
 		players.append(p)
+	voice_player = AudioStreamPlayer.new()
+	voice_player.bus = "Voice"   # tiếng bíp thay giọng Cỗ Máy theo thanh "GIỌNG CỖ MÁY"
+	add_child(voice_player)
 	if sounds.has("hum"):
 		var hum: AudioStreamWAV = (sounds["hum"] as AudioStreamWAV).duplicate()
 		hum.loop_mode = AudioStreamWAV.LOOP_FORWARD
@@ -66,6 +70,16 @@ func sfx(sound: String, vol_db := 0.0, pitch := 1.0) -> void:
 	p.volume_db = vol_db
 	p.pitch_scale = pitch * rng.randf_range(0.94, 1.06)
 	p.play()
+
+
+## Tiếng bíp "giọng" Cỗ Máy (khi máy không có giọng TTS), đi qua bus Voice.
+func voice_blip(pitch := 1.0) -> void:
+	if muted or not sounds.has("blip") or voice_player == null:
+		return
+	voice_player.stream = sounds["blip"]
+	voice_player.volume_db = -12.0
+	voice_player.pitch_scale = pitch
+	voice_player.play()
 
 
 ## Âm thanh riêng cho từng kiểu chết.
@@ -115,3 +129,5 @@ func _exit_tree() -> void:
 		music.stop()
 	if hum_player:
 		hum_player.stop()
+	if voice_player:
+		voice_player.stop()

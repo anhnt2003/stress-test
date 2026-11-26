@@ -10,6 +10,11 @@ extends Node
 
 const DEFAULT_PORT := 24555
 const MAX_CLIENTS := 3
+## Slot ENet dư cho kết nối đang chờ: người vào lại khi kết nối cũ chưa bị phát hiện mất, hoặc người thừa
+## cần nhận thông báo "phòng đầy" thay vì bị ENet bỏ qua. Ghế thật do c_hello quyết.
+const EXTRA_SLOTS := 3
+## Kết nối không gửi c_hello trong thời gian này thì bị ngắt (bản build lạ, kết nối treo).
+const HELLO_TIMEOUT := 5.0
 const SNAP_RATE := 20.0
 const INPUT_RATE := 30.0
 const INTERP_DELAY := 0.1
@@ -60,6 +65,7 @@ var peers := {}      # peer_id -> {"seat", "name", "token"}
 var dropped := {}    # token -> ghế cũ (rớt mạng, chờ vào lại)
 var _snap_acc := 0.0
 var _links: Array = []
+var _pending := {}   # peer_id -> thời điểm kết nối, chưa gửi c_hello
 ## Máy chủ đang tạm dừng (máy chủ: trạng thái của chính nó; máy khách: theo sự kiện từ máy chủ).
 var host_paused := false
 ## Máy khách: menu đang mở thì không gửi hướng đi (phím dùng để chọn menu không được lái nhân vật).
@@ -77,6 +83,7 @@ var _lag_q: Array = []
 var _local: Array[InputSource] = []
 ## Ghế bị đánh dấu chết theo ảnh chụp (không qua RPC chết): ảnh chụp sau báo sống thì hồi lại.
 var _synced_dead := {}
+var _saved_rules := {}
 var snaps_received := 0
 var loads_received := 0
 var kills_received := 0
@@ -110,24 +117,28 @@ func host(p: int, match_: MatchManager, s: Settings) -> int:
 	settings = s
 	port = p
 	peer = ENetMultiplayerPeer.new()
-	var err := peer.create_server(p, MAX_CLIENTS)
+	var err := peer.create_server(p, MAX_CLIENTS + EXTRA_SLOTS)
 	if err != OK:
 		peer = null
 		return err
+	# máy khách chỉ nói chuyện với máy chủ: tắt relay để máy chủ không tự phát thông báo vào / rời phòng
+	# cho mọi kết nối (kể cả kết nối đang đóng → ENet báo lỗi gửi gói)
+	(multiplayer as SceneMultiplayer).server_relay = false
 	multiplayer.multiplayer_peer = peer
 	mode = "host"
 	connected = true
 	_link(multiplayer.peer_disconnected, _on_peer_disconnected)
+	_link(multiplayer.peer_connected, func(id): _pending[id] = Time.get_ticks_msec() / 1000.0)
 	_link(m.door_loaded, _h_door_loaded)
-	_link(m.killed, func(sj, md, dir, pos): rpc("s_kill", sj.idx, md, dir, pos))
-	_link(m.respawned, func(sj): rpc("s_respawn", sj.idx, sj.position, sj.yaw()))
-	_link(m.announced, func(text, dur): rpc("s_event", "ann", [text, dur]))
-	_link(m.sfx_requested, func(n, v, pt): rpc("s_event", "sfx", [n, v, pt]))
-	_link(m.shake_requested, func(a): rpc("s_event", "shake", [a]))
-	_link(m.sabotaged, func(sj, hint): rpc("s_event", "sab", [sj.idx, hint]))
-	_link(m.state_changed, func(st): rpc("s_state", st))
-	_link(m.round_ended, func(rows): rpc("s_round", rows, m.totals, m.total_deaths))
-	_link(m.match_ended, func(rows, best): rpc("s_final", rows, best, m.totals, m.total_deaths))
+	_link(m.killed, func(sj, md, dir, pos): _broadcast("s_kill", [sj.idx, md, dir, pos]))
+	_link(m.respawned, func(sj): _broadcast("s_respawn", [sj.idx, sj.position, sj.yaw()]))
+	_link(m.announced, func(text, dur): _broadcast("s_event", ["ann", [text, dur]]))
+	_link(m.sfx_requested, func(n, v, pt): _broadcast("s_event", ["sfx", [n, v, pt]]))
+	_link(m.shake_requested, func(a): _broadcast("s_event", ["shake", [a]]))
+	_link(m.sabotaged, func(sj, hint): _broadcast("s_event", ["sab", [sj.idx, hint]]))
+	_link(m.state_changed, func(st): _broadcast("s_state", [st]))
+	_link(m.round_ended, func(rows): _broadcast("s_round", [rows, m.totals, m.total_deaths]))
+	_link(m.match_ended, func(rows, best): _broadcast("s_final", [rows, best, m.totals, m.total_deaths]))
 	room_code = RoomCode.encode(RoomCode.local_ipv4(), p)
 	status_changed.emit("ĐÃ MỞ PHÒNG. MÃ PHÒNG: %s" % room_code)
 	return OK
@@ -146,6 +157,7 @@ func join(address: String, nm: String, match_: MatchManager, s: Settings) -> int
 	if err != OK:
 		peer = null
 		return err
+	(multiplayer as SceneMultiplayer).server_relay = false
 	multiplayer.multiplayer_peer = peer
 	mode = "client"
 	connected = false
@@ -155,6 +167,8 @@ func join(address: String, nm: String, match_: MatchManager, s: Settings) -> int
 	_input_acc = 0.0
 	_test = {}
 	host_paused = false
+	# máy chủ sẽ ghi đè các luật này; giữ lại để khôi phục khi rời phòng
+	_saved_rules = {"sab": m.sabotage_enabled, "seed": m.seed_base}
 	snaps_received = 0
 	loads_received = 0
 	kills_received = 0
@@ -182,10 +196,15 @@ func close() -> void:
 		multiplayer.multiplayer_peer = null
 	if m:
 		m.remote = false
+		if not _saved_rules.is_empty():
+			m.sabotage_enabled = bool(_saved_rules.sab)
+			m.seed_base = int(_saved_rules.seed)
+	_saved_rules = {}
 	mode = ""
 	connected = false
 	peers.clear()
 	dropped.clear()
+	_pending.clear()
 	_lag_q.clear()
 	_bufs.clear()
 	_have_offset = false
@@ -194,8 +213,13 @@ func close() -> void:
 
 
 func _leave(reason: String) -> void:
+	print("NET rời phòng: ", reason)
 	close()
 	left.emit(reason)
+
+
+func _ready() -> void:
+	status_changed.connect(func(text): print("NET ", text))   # nhật ký cho máy chủ không màn hình
 
 
 func _link(sig: Signal, c: Callable) -> void:
@@ -211,8 +235,9 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 	if not is_host():
 		return
 	var id := multiplayer.get_remote_sender_id()
+	_pending.erase(id)
 	if protocol != PROTOCOL:
-		rpc_id(id, "s_reject", "MÁY CHỦ CHẠY PHIÊN BẢN KHÁC (%s)." % PROTOCOL)
+		_reject(id, "MÁY CHỦ CHẠY PHIÊN BẢN KHÁC (%s)." % PROTOCOL)
 		return
 	if peers.has(id):
 		rpc_id(id, "s_welcome", int(peers[id].seat))   # chào lại: không cấp thêm ghế
@@ -221,14 +246,13 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 	var plan := plan_seat(m.seats, peers, dropped, token, now)
 	var seat := int(plan.seat)
 	if seat < 0:
-		rpc_id(id, "s_reject", "PHÒNG ĐÃ ĐỦ 4 NGƯỜI.")
+		_reject(id, "PHÒNG ĐÃ ĐỦ 4 NGƯỜI.")
 		return
 	var old := int(plan.takeover)
 	if old != 0:
 		# cùng máy vào lại trước khi máy chủ nhận ra kết nối cũ đã chết: tiếp quản ghế, ngắt kết nối cũ
 		peers.erase(old)
-		if peer:
-			peer.disconnect_peer(old, true)   # ngắt ngay để không gửi gói tới kết nối đang đóng
+		_drop_peer(old)
 	var clean := nm.strip_edges().substr(0, 16).to_upper()
 	if clean == "":
 		clean = "KHÁCH %d" % (seat + 1)
@@ -249,6 +273,27 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 	if m.state != MatchManager.ST_LOBBY:
 		m.announce("%s VÀO THAY ĐỐI TƯỢNG %s." % [clean, m.seats.looks[seat].label])
 	status_changed.emit("%s ĐÃ VÀO PHÒNG (ĐỐI TƯỢNG %s)." % [clean, m.seats.looks[seat].label])
+
+
+## Gửi RPC tới mọi người đã vào phòng mà kết nối còn sống. Không phát cho cả SceneMultiplayer (rpc()) vì
+## như vậy sẽ gửi cả cho kết nối đang chờ c_hello, đang bị từ chối hoặc đang rời đi (ENet báo lỗi gửi gói).
+func _broadcast(method: String, args: Array) -> void:
+	for id in peers:
+		var pp := peer.get_peer(id) if peer else null
+		if pp and pp.get_state() == ENetPacketPeer.STATE_CONNECTED:
+			callv("rpc_id", [id, method] + args)
+
+
+## Từ chối có thông báo, rồi ngắt sau một chút để thông báo kịp tới (máy khách cũng tự rời khi nhận).
+func _reject(id: int, reason: String) -> void:
+	rpc_id(id, "s_reject", reason)
+	get_tree().create_timer(0.5).timeout.connect(func(): _drop_peer(id))
+
+
+## Ngắt một peer qua SceneMultiplayer (bỏ khỏi danh sách peer, không còn bị gửi RPC).
+func _drop_peer(id: int) -> void:
+	if is_host() and multiplayer.get_peers().has(id):
+		multiplayer.disconnect_peer(id)
 
 
 ## Chọn ghế cho người vừa vào. Trả về {"seat": ghế (-1 nếu đầy), "takeover": peer cũ cần ngắt (0 nếu không)}.
@@ -313,7 +358,7 @@ func c_look(dh: int, dc: int) -> void:
 
 
 func _h_door_loaded(i: int, _door: DoorBase) -> void:
-	rpc("s_load", i, m.seed_base, m.totals, m.total_deaths)
+	_broadcast("s_load", [i, m.seed_base, m.totals, m.total_deaths])
 	_snap_acc = 1.0   # gửi ảnh chụp ngay khung sau
 
 
@@ -331,7 +376,7 @@ func _lobby_data() -> Dictionary:
 
 func _send_lobby() -> void:
 	if is_host():
-		rpc("s_lobby", _lobby_data())
+		_broadcast("s_lobby", [_lobby_data()])
 
 
 func broadcast_lobby() -> void:
@@ -344,7 +389,7 @@ func notify_pause(paused: bool) -> void:
 	host_paused = paused
 	if not paused:
 		m.seats.clear_inputs()   # nút máy khách bấm trong lúc dừng không được nổ ra khi chơi tiếp
-	rpc("s_event", "pause", [paused])
+	_broadcast("s_event", ["pause", [paused]])
 
 
 static func pack_flags(s: Subject) -> int:
@@ -361,12 +406,19 @@ func snapshot() -> Dictionary:
 
 
 func host_step(dt: float) -> void:
-	if not is_host() or peers.is_empty():
+	if not is_host():
+		return
+	var now := Time.get_ticks_msec() / 1000.0
+	for id in _pending.keys():
+		if now - float(_pending[id]) > HELLO_TIMEOUT:
+			_pending.erase(id)
+			_drop_peer(id)
+	if peers.is_empty():
 		return
 	_snap_acc += dt
 	if _snap_acc >= 1.0 / SNAP_RATE:
 		_snap_acc = 0.0
-		rpc("s_snap", snapshot())
+		_broadcast("s_snap", [snapshot()])
 
 
 # =====================================================================
@@ -552,6 +604,8 @@ func _apply_snap(d: Dictionary) -> void:
 			else:
 				_sync_dead(s, float(e[6]), int(e[7]))
 	m.door.apply_net_state(d.get("x", {}))
+	if m.state != MatchManager.ST_PLAY:
+		m.door.client_tick(0.0)   # chỉ dựng tư thế (người vào lúc chấm điểm thấy đúng sàn vỡ, máy ép...)
 
 
 ## Người vào giữa trận đã lỡ sự kiện chết (RPC chỉ gửi một lần): máy chủ báo đã chết ít nhất 0,3 giây
