@@ -45,6 +45,8 @@ var state_t := 0.0
 var totals := [0, 0, 0, 0]
 var total_deaths := [0, 0, 0, 0]
 var last_rows: Array = []
+## Người được giữ lại ở trận vừa xong (để gửi cho người vào phòng lúc đang tổng kết).
+var best := 0
 var subjects: Array[Subject] = []
 var corpses: Array[Node3D] = []
 var level_root: Node3D
@@ -207,21 +209,22 @@ func _enter_final() -> void:
 		metric.append(Scoring.final_metric(int(totals[i]), int(total_deaths[i])))
 	var ranks := Scoring.rank(metric)
 	last_rows.clear()
-	var best := 0
+	var winner := 0
 	var kth := 0
 	for i in Seats.N:
 		var verdict := "ĐƯỢC GIỮ LẠI" if int(ranks[i]) == 1 else "LOẠI BỎ"
 		last_rows.append({"idx": i, "rank": int(ranks[i]), "detail": "CHẾT %d LẦN" % int(total_deaths[i]), "pts": int(totals[i]), "total": int(totals[i]), "verdict": verdict})
 		if int(ranks[i]) == 1:
-			best = i
+			winner = i
 		elif subjects[i].out <= 0.0:
 			subjects[i].doom = 1.2 + 0.6 * kth
 			kth += 1
 	last_rows.sort_custom(func(a, c): return a.rank < c.rank or (a.rank == c.rank and a.idx < c.idx))
-	announce("ĐÃ QUA 10 CỬA. GIỮ LẠI ĐỐI TƯỢNG %s. LOẠI BỎ PHẦN CÒN LẠI." % subj_label(subjects[best]), 999.0)
+	best = winner
+	announce("ĐÃ QUA 10 CỬA. GIỮ LẠI ĐỐI TƯỢNG %s. LOẠI BỎ PHẦN CÒN LẠI." % subj_label(subjects[winner]), 999.0)
 	if log_events:
-		print("FINAL totals=%s deaths=%s best=%d" % [str(totals), str(total_deaths), best + 1])
-	match_ended.emit(last_rows, best)
+		print("FINAL totals=%s deaths=%s best=%d" % [str(totals), str(total_deaths), winner + 1])
+	match_ended.emit(last_rows, winner)
 
 
 func _run_executions() -> void:

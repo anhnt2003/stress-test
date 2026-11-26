@@ -75,6 +75,8 @@ var _input_acc := 0.0
 var _counts := [0, 0, 0]
 var _lag_q: Array = []
 var _local: Array[InputSource] = []
+## Ghế bị đánh dấu chết theo ảnh chụp (không qua RPC chết): ảnh chụp sau báo sống thì hồi lại.
+var _synced_dead := {}
 var snaps_received := 0
 var loads_received := 0
 var kills_received := 0
@@ -241,12 +243,7 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 	if m.state == MatchManager.ST_RESULT:
 		rpc_id(id, "s_round", m.last_rows, m.totals, m.total_deaths)
 	elif m.state == MatchManager.ST_FINAL:
-		var best := 0
-		for r in m.last_rows:
-			if int(r.rank) == 1:
-				best = int(r.idx)
-				break
-		rpc_id(id, "s_final", m.last_rows, best, m.totals, m.total_deaths)
+		rpc_id(id, "s_final", m.last_rows, m.best, m.totals, m.total_deaths)
 	if host_paused:
 		rpc_id(id, "s_event", "pause", [true])
 	if m.state != MatchManager.ST_LOBBY:
@@ -433,6 +430,7 @@ func _apply_load(i: int, seed_base: int, totals: Array, deaths: Array) -> void:
 	m.totals = totals.duplicate()
 	m.total_deaths = deaths.duplicate()
 	_bufs.clear()
+	_synced_dead.clear()
 	for k in Seats.N:
 		_bufs.append(SnapshotBuffer.new())
 	for s in m.subjects:
@@ -451,6 +449,7 @@ func s_state(st: int) -> void:
 func s_kill(idx: int, md: String, dir: Vector3, pos: Vector3) -> void:
 	_recv(func():
 		kills_received += 1
+		_synced_dead.erase(idx)
 		if idx >= 0 and idx < m.subjects.size():
 			m.kill_fx(m.subjects[idx], md, dir, pos))
 
@@ -458,6 +457,7 @@ func s_kill(idx: int, md: String, dir: Vector3, pos: Vector3) -> void:
 @rpc("authority", "call_remote", "reliable")
 func s_respawn(idx: int, pos: Vector3, yaw: float) -> void:
 	_recv(func():
+		_synced_dead.erase(idx)
 		if idx >= 0 and idx < m.subjects.size():
 			var s := m.subjects[idx]
 			m.respawn_fx(s, pos, yaw)
@@ -487,6 +487,8 @@ func _apply_event(kind: String, args: Array) -> void:
 				m.sabotaged.emit(m.subjects[idx], String(args[1]))
 		"pause":
 			host_paused = bool(args[0])
+			if not host_paused:
+				_have_offset = false   # đồng hồ máy chủ đã đứng trong lúc dừng: lấy lại mốc ở ảnh chụp kế
 			status_changed.emit("MÁY CHỦ ĐÃ TẠM DỪNG." if host_paused else "MÁY CHỦ CHƠI TIẾP.")
 
 
@@ -545,7 +547,10 @@ func _apply_snap(d: Dictionary) -> void:
 		s.score = int(e[4])
 		s.doom = float(e[5])
 		if e.size() > 7:
-			_sync_dead(s, float(e[6]), int(e[7]))
+			if float(e[6]) <= 0.0 and _synced_dead.has(i) and s.out > 0.0:
+				_unsync_dead(s)   # ảnh chụp cũ (đến sau lệnh thả người) đã làm nó "chết" nhầm
+			else:
+				_sync_dead(s, float(e[6]), int(e[7]))
 	m.door.apply_net_state(d.get("x", {}))
 
 
@@ -561,6 +566,17 @@ func _sync_dead(s: Subject, server_out: float, mode_code: int) -> void:
 	s.set_solid(false)
 	if s.pivot:
 		s.pivot.visible = false
+	_synced_dead[s.idx] = true
+
+
+func _unsync_dead(s: Subject) -> void:
+	_synced_dead.erase(s.idx)
+	s.out = 0.0
+	s.dead_mode = ""
+	s.dead_t = 0.0
+	if s.pivot:
+		s.pivot.visible = true
+	s.tag.visible = true
 
 
 # =====================================================================
@@ -572,6 +588,11 @@ func client_step(dt: float) -> void:
 		(_lag_q.pop_front()[1] as Callable).call()
 	if not is_client() or m == null or m.door == null or _bufs.size() < Seats.N:
 		return
+	_input_acc += dt
+	if _input_acc >= 1.0 / INPUT_RATE and connected:
+		_input_acc = 0.0
+		# vẫn gửi khi máy chủ dừng (hướng đi rỗng) để máy chủ biết kết nối còn sống
+		rpc_id(1, "c_input", Vector2.ZERO if host_paused else local_move(), _counts)
 	if host_paused:
 		return   # máy chủ dừng: đứng hình, không tự chạy đồng hồ / máy móc / dự đoán
 	m.t += dt
@@ -595,10 +616,6 @@ func client_step(dt: float) -> void:
 	m.gore.update(dt)
 	for s in m.subjects:
 		s.animate(m.t, m.door.led_alarm(s))
-	_input_acc += dt
-	if _input_acc >= 1.0 / INPUT_RATE and connected:
-		_input_acc = 0.0
-		rpc_id(1, "c_input", local_move(), _counts)
 	if autotest:
 		_autotest_step(dt)
 
@@ -642,6 +659,8 @@ func _predict(s: Subject, dt: float) -> void:
 
 
 func send_action(_kind: String, _dev: int, act: String) -> void:
+	if host_paused or input_blocked:
+		return   # máy chủ dừng / đang mở menu: lần bấm này không được nổ ra sau đó
 	var i := ACTIONS.find(act)
 	if i >= 0:
 		_counts[i] = int(_counts[i]) + 1

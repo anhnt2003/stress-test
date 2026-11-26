@@ -8,6 +8,7 @@ var player_name := ""
 var move := Vector2.ZERO
 var counts := [0, 0, 0]
 var last_seen := -1.0
+const STALE := 0.5
 
 
 func _init(peer_id := 0, nm := "") -> void:
@@ -44,4 +45,9 @@ func receive(mv: Vector2, c: Array, now: float) -> bool:
 
 
 func poll(_s: Subject, _m: MatchManager, _dt: float) -> Dictionary:
-	return {"move": move, "jump": jump_req, "shove": shove_req, "sabotage": sabotage_req, "face": null}
+	return {"move": current_move(Time.get_ticks_msec() / 1000.0), "jump": jump_req, "shove": shove_req, "sabotage": sabotage_req, "face": null}
+
+
+## Hướng đi hiện tại; máy khách im lặng quá STALE giây (rớt mạng chưa bị phát hiện) thì đứng lại.
+func current_move(now: float) -> Vector2:
+	return move if now - last_seen <= STALE else Vector2.ZERO

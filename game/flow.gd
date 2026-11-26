@@ -12,6 +12,10 @@ var settings: Settings
 var paused := false
 var _settings_from := ""
 const FINAL_LOCK := 3.6
+## Chạy với --seed: giữ seed cố định cho mọi trận (tái hiện được).
+var fixed_seed := false
+## RNG riêng để chọn seed trận (RNG chung bị seed lại khi nạp sảnh / cửa).
+var _rng := RandomNumberGenerator.new()
 
 
 func setup(a: Node) -> void:
@@ -48,6 +52,8 @@ func setup(a: Node) -> void:
 
 func boot(cli: Dictionary) -> void:
 	apply_settings()
+	fixed_seed = int(cli.seed) != 0
+	_rng.randomize()
 	net.net_lag = float(cli.net_lag) / 1000.0
 	net.autotest = bool(cli.net_test)
 	if int(cli.host) >= 0:
@@ -82,8 +88,15 @@ func show_menu() -> void:
 	menus.main_menu.open()
 
 
+## Bỏ tạm dừng ở mọi đường thoát (chơi tiếp, chơi lại, về sảnh) và báo cho máy khách.
+func _unpause() -> void:
+	if paused:
+		paused = false
+		net.notify_pause(false)
+
+
 func enter_lobby() -> void:
-	paused = false
+	_unpause()
 	menus.hide_all()
 	# lúc mới khởi động MatchManager đã ở ST_LOBBY nhưng chưa nạp sảnh (door == null)
 	if m.door == null or m.state != MatchManager.ST_LOBBY:
@@ -92,9 +105,12 @@ func enter_lobby() -> void:
 
 
 func start_match() -> void:
-	paused = false
+	_unpause()
 	menus.hide_all()
 	app.voice.clear()
+	# mỗi trận một seed mới (chỗ xuất phát, người cầm lõi đầu...), trừ khi chạy với --seed
+	if not fixed_seed:
+		m.seed_base = _rng.randi_range(1, 999999)
 	m.start_match()
 
 

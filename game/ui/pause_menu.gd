@@ -14,4 +14,6 @@ func open(online_client := false) -> void:
 	# máy khách mạng không được chơi lại / dừng trận của máy chủ
 	($Buttons/Restart as Button).visible = not online_client
 	($Buttons/Lobby as Button).visible = not online_client
+	($Foot as Label).text = "ESC / START: CHƠI TIẾP   ·   Q: RỜI PHÒNG (TRẬN CỦA MÁY CHỦ VẪN CHẠY)" if online_client \
+		else "ESC / START: CHƠI TIẾP   ·   R: CHƠI LẠI   ·   Q: VỀ SẢNH"
 	($Buttons/Resume as Button).grab_focus()

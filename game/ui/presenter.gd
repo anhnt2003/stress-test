@@ -155,7 +155,7 @@ func refresh() -> void:
 	if show and not result.visible:
 		var fin := st == MatchManager.ST_FINAL
 		var head := "TỔNG KẾT 10 CỬA" if fin else ("KẾT QUẢ CỬA %d/10  ·  %s" % [m.door_index + 1, m.door.title])
-		var foot := "ENTER / START: CHƠI LẠI   ·   ESC: VỀ SẢNH" if fin else "HẠNG 1-4: +4 +3 +2 +1   ·   BẰNG SỐ LẦN CHẾT THÌ XÉT AI CHẾT LẦN ĐẦU MUỘN HƠN"
+		var foot := ("ESC: RỜI PHÒNG   ·   CHỜ MÁY CHỦ CHƠI LẠI" if m.remote else "ENTER / START: CHƠI LẠI   ·   ESC: VỀ SẢNH") if fin else "HẠNG 1-4: +4 +3 +2 +1   ·   BẰNG SỐ LẦN CHẾT THÌ XÉT AI CHẾT LẦN ĐẦU MUỘN HƠN"
 		result.show_rows(head, foot, m.last_rows, m.seats.looks, fin)
 	elif not show:
 		result.visible = false

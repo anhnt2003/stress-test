@@ -28,6 +28,28 @@ func run_async(t) -> void:
 	app.m.state_t = 5.0
 	app.flow._on_start()
 	t.check("bảng đã hiện: chơi lại được", app.m.state, MatchManager.ST_INTRO)
+	# Máy chủ rời menu tạm dừng bằng "Chơi lại" / "Về sảnh": máy khách phải được báo chơi tiếp
+	app.net.mode = "host"
+	app.net.m = app.m
+	app.flow.paused = true
+	app.net.host_paused = true
+	app.flow.start_match()
+	t.ok("chơi lại từ menu tạm dừng: hết tạm dừng ở máy chủ và máy khách", not app.flow.paused and not app.net.host_paused)
+	app.flow.paused = true
+	app.net.host_paused = true
+	app.flow.enter_lobby()
+	t.ok("về sảnh từ menu tạm dừng: hết tạm dừng ở máy chủ và máy khách", not app.flow.paused and not app.net.host_paused)
+	app.net.mode = ""
+	# Mỗi trận một seed mới (trừ khi chạy với --seed)
+	app.flow.fixed_seed = false
+	app.flow.start_match()
+	var s1: int = app.m.seed_base
+	app.flow.start_match()
+	t.ok("hai trận liên tiếp khác seed", app.m.seed_base != s1 and s1 != 0)
+	app.flow.fixed_seed = true
+	app.m.seed_base = 42
+	app.flow.start_match()
+	t.check("có --seed thì giữ nguyên seed", app.m.seed_base, 42)
 	app.queue_free()
 	await t.process_frame
 
@@ -48,6 +70,11 @@ func run_async(t) -> void:
 			break
 	t.ok("nhảy liên tục ngoài vòng lửa vẫn cháy", killed)
 
+	# Người được giữ lại lưu trên MatchManager (gửi đúng cho người vào lúc tổng kết)
+	m.totals = [10, 30, 30, 5]
+	m.total_deaths = [0, 0, 0, 0]
+	m._enter_final()
+	t.check("người thắng khi đồng điểm: ghế cuối cùng có hạng 1, giống câu công bố", m.best, 2)
 	# Máy khách vào giữa trận: ảnh chụp báo đã chết thì đánh dấu chết, không chờ RPC đã lỡ
 	var net := NetSession.new()
 	t.root.add_child(net)
@@ -77,6 +104,21 @@ func run_async(t) -> void:
 	net.host_paused = false
 	net.client_step(0.5)
 	t.ok("máy chủ chơi tiếp: đồng hồ chạy lại", m.t > t0)
+	# Máy chủ dừng: lần bấm nút không được đếm (khỏi nổ ra khi chơi tiếp)
+	net.host_paused = true
+	net.send_action("kb1", 0, "sabotage")
+	t.check("máy chủ dừng: không đếm nút bấm", net._counts, [0, 0, 0])
+	net.host_paused = false
+	net.send_action("kb1", 0, "sabotage")
+	t.check("máy chủ chạy: đếm nút bấm", net._counts, [0, 0, 1])
+	# Ảnh chụp cũ đến sau lệnh thả người làm "chết" nhầm: ảnh chụp mới báo sống thì hồi lại
+	var s3: Subject = m.subjects[3]
+	net._sync_dead(s3, 0.05, NetSession.MODES.find("fry"))
+	t.ok("ảnh chụp cũ đánh dấu chết", s3.out > 0.0 and not s3.pivot.visible)
+	var snap := net.snapshot()
+	snap.s[3][6] = 0.0
+	net._apply_snap(snap)
+	t.ok("ảnh chụp mới báo sống: hồi lại", s3.out <= 0.0 and s3.pivot.visible)
 	# Menu đang mở: không gửi hướng đi
 	net._test.move = Vector2(1, 0)
 	net.input_blocked = true
@@ -118,5 +160,10 @@ func run(t) -> void:
 	t.ok("đổi âm lượng không áp lại cửa sổ", not st.window_changed())
 	st.resolution = 0
 	t.ok("đổi độ phân giải thì áp lại cửa sổ", st.window_changed())
+	# Người chơi mạng im lặng (rớt mạng chưa bị phát hiện) thì đứng lại
+	var ns := NetSource.new(9, "B")
+	ns.receive(Vector2(1, 0), [0, 0, 0], 10.0)
+	t.check("vừa nhận input: đi theo", ns.current_move(10.2), Vector2(1, 0))
+	t.check("im lặng quá lâu: đứng lại", ns.current_move(11.0), Vector2.ZERO)
 	# Ô vào phòng: localhost kèm cổng
 	t.check("localhost:cổng", RoomCode.parse_address("localhost:9000", 24555), {"ip": "127.0.0.1", "port": 9000})

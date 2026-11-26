@@ -13,6 +13,10 @@ jobs:
   export:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    defaults:
+      run:
+        # shell: bash = bash -eo pipefail: mã thoát của godot không bị `| tee` che mất
+        shell: bash
     env:
       GODOT_VERSION: 4.4.1
       # secrets không dùng trực tiếp trong `if:` được, nên đưa vào biến môi trường của job

@@ -8,6 +8,10 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    defaults:
+      run:
+        # shell: bash = bash -eo pipefail: mã thoát của godot không bị `| tee` che mất
+        shell: bash
     env:
       GODOT_VERSION: 4.4.1
     steps:
