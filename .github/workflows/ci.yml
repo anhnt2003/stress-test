@@ -29,7 +29,7 @@ jobs:
 
       - name: Chạy thử cả trận 10 cửa (bot, có chơi xấu)
         run: |
-          godot --headless --path . -- --shot=/tmp/none.png --match --phase=400 2>&1 | tee match.log
+          godot --headless --fixed-fps 60 --path . -- --shot=/tmp/none.png --match --phase=400 2>&1 | tee match.log
           ! grep -q "SCRIPT ERROR" match.log
           grep -q "RESULT door=10" match.log
           grep -q "FINAL totals=" match.log

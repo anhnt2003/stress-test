@@ -73,8 +73,9 @@ func setup(level_root: Node3D) -> void:
 			var mt := Build.grime(base_col, 0.5, 0.8, 0.5, 12.0, 0.6)
 			var c := tile_center(ix, iz)
 			var mi := Build.box(root, Vector3(TILE_S - 0.17, 0.12, TILE_S - 0.17), mt, Vector3(c.x, TILE_TOP - 0.06, c.z))
-			tiles.append({"mi": mi, "mat": mt, "col": base_col, "state": 0, "hp": 2, "timer": 0.0, "vy": 0.0, "base": mi.position, "home": mi.position})
-	var spots := [Vector2i(1, 5), Vector2i(5, 1), Vector2i(1, 1), Vector2i(5, 5)]
+			var body := static_box(mi, Vector3(TILE_S - 0.17, 0.12, TILE_S - 0.17), Vector3.ZERO, LAYER_FLOOR)
+			tiles.append({"mi": mi, "mat": mt, "col": base_col, "state": 0, "hp": 2, "timer": 0.0, "vy": 0.0, "base": mi.position, "home": mi.position, "body": body})
+	var spots := shuffled([Vector2i(1, 5), Vector2i(5, 1), Vector2i(1, 1), Vector2i(5, 5)])
 	for i in 4:
 		m.spawn_subject(i, tile_center(spots[i].x, spots[i].y))
 
@@ -129,6 +130,7 @@ func _animate_tiles(dt: float) -> int:
 				if tl.timer <= 0.0:
 					tl.state = 2
 					tl.vy = 0.0
+					(tl.body as StaticBody3D).collision_layer = 0
 			2:
 				tl.vy -= Subject.GRAVITY * dt
 				mi.position.y += float(tl.vy) * dt
@@ -150,6 +152,7 @@ func _reset_tiles() -> void:
 		mi.position = tl.home
 		mi.rotation = Vector3.ZERO
 		tl.base = tl.home
+		(tl.body as StaticBody3D).collision_layer = LAYER_FLOOR
 		(tl.mat as ShaderMaterial).set_shader_parameter("base", tl.col)
 		(tl.mat as ShaderMaterial).set_shader_parameter("emit_e", 0.0)
 	for s in subjects():

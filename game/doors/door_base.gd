@@ -6,6 +6,9 @@ extends RefCounted
 
 const PLATFORM_TOP := 0.5
 const PLATFORM_R := 3.5
+## Lớp va chạm: 1 đối tượng, 2 chướng ngại vật (chặn đối tượng), 3 mặt sàn (cho xác vật lý), 4 xác.
+const LAYER_OBSTACLE := 2
+const LAYER_FLOOR := 4
 
 ## Mã loại cửa (0..9), dùng cho nhật ký và bảng tên.
 var id := -1
@@ -33,6 +36,8 @@ func _init(match_: MatchManager) -> void:
 ## Dựng hình và trạng thái ban đầu, rồi thả 4 đối tượng vào cửa.
 func setup(level_root: Node3D) -> void:
 	root = level_root
+	# sàn bê tông của buồng: xác văng khỏi bục thì rơi xuống đây
+	static_box(root, Vector3(13.6, 0.4, 13.0), Vector3(0, -0.2, 0.5), LAYER_FLOOR)
 
 
 ## Luật của cửa, chạy mỗi bước trong lúc thi.
@@ -142,6 +147,59 @@ func hide_for_closeup() -> void:
 	pass
 
 
+# ---------- vật thể va chạm ----------
+static func _shape_node(body: CollisionObject3D, shape: Shape3D, offset := Vector3.ZERO) -> CollisionShape3D:
+	var cs := CollisionShape3D.new()
+	cs.shape = shape
+	cs.position = offset
+	body.add_child(cs)
+	return cs
+
+
+static func _box_shape(size: Vector3) -> BoxShape3D:
+	var b := BoxShape3D.new()
+	b.size = size
+	return b
+
+
+static func _cyl_shape(r: float, h: float) -> CylinderShape3D:
+	var c := CylinderShape3D.new()
+	c.radius = r
+	c.height = h
+	return c
+
+
+## Khối tĩnh (sàn hoặc chướng ngại vật).
+func static_box(parent: Node3D, size: Vector3, pos: Vector3, layer := LAYER_OBSTACLE) -> StaticBody3D:
+	var b := StaticBody3D.new()
+	b.collision_layer = layer
+	b.collision_mask = 0
+	_shape_node(b, _box_shape(size))
+	parent.add_child(b)
+	b.position = pos
+	return b
+
+
+func static_cyl(parent: Node3D, r: float, h: float, pos: Vector3, layer := LAYER_OBSTACLE) -> StaticBody3D:
+	var b := StaticBody3D.new()
+	b.collision_layer = layer
+	b.collision_mask = 0
+	_shape_node(b, _cyl_shape(r, h))
+	parent.add_child(b)
+	b.position = pos
+	return b
+
+
+## Khối chuyển động theo nút cha (máy ép, thùng hàng, quả tạ): chặn đối tượng và đẩy xác.
+func moving_body(parent: Node3D, shape: Shape3D, offset := Vector3.ZERO, layer := LAYER_OBSTACLE | LAYER_FLOOR) -> AnimatableBody3D:
+	var b := AnimatableBody3D.new()
+	b.collision_layer = layer
+	b.collision_mask = 0
+	_shape_node(b, shape, offset)
+	parent.add_child(b)
+	return b
+
+
 # ---------- tiện ích chung cho các cửa ----------
 func k_round() -> float:
 	return clampf(m.lt / MatchManager.ROUND_TIME, 0.0, 1.0)
@@ -152,6 +210,7 @@ func build_platform(r: float) -> void:
 	var plate := Build.grime(Color(0.26, 0.24, 0.20), 0.55, 0.8, 0.5, 14.0, 0.6)
 	Build.cyl(root, r + 0.18, r + 0.3, PLATFORM_TOP - 0.06, hazard, Vector3(0, (PLATFORM_TOP - 0.06) / 2.0, 0), Vector3.ZERO, 40)
 	Build.cyl(root, r, r, PLATFORM_TOP, plate, Vector3(0, PLATFORM_TOP / 2.0, 0), Vector3.ZERO, 40)
+	static_cyl(root, r, PLATFORM_TOP, Vector3(0, PLATFORM_TOP / 2.0, 0), LAYER_FLOOR)
 	Build.cyl(root, 0.4, 0.4, 0.02, Build.mat(Color(0.02, 0.02, 0.02), 0.8, 0.5), Vector3(0, PLATFORM_TOP + 0.005, 0), Vector3.ZERO, 10)
 	for i in 10:
 		var a := i * TAU / 10.0
@@ -167,9 +226,21 @@ func build_platform(r: float) -> void:
 
 
 func spawn_circle(radius: float, offset := 0.6) -> void:
+	var slots := shuffled([0, 1, 2, 3])
 	for i in 4:
-		var a := i * TAU / 4.0 + offset
+		var a := int(slots[i]) * TAU / 4.0 + offset
 		m.spawn_subject(i, Vector3(cos(a) * radius, PLATFORM_TOP, sin(a) * radius))
+
+
+## Xáo thứ tự (theo seed của cửa) để không ghế nào luôn được chỗ xuất phát tốt hơn.
+func shuffled(arr: Array) -> Array:
+	var out := arr.duplicate()
+	for i in range(out.size() - 1, 0, -1):
+		var j := randi() % (i + 1)
+		var tmp = out[i]
+		out[i] = out[j]
+		out[j] = tmp
+	return out
 
 
 func subjects() -> Array[Subject]:

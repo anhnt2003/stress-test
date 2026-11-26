@@ -21,6 +21,7 @@ func setup(level_root: Node3D) -> void:
 	super(level_root)
 	build_platform(PLATFORM_R)
 	Build.cyl(root, 0.6, 0.72, 1.0, Build.grime(Color(0.30, 0.29, 0.25), 0.6, 0.8, 0.5, 14.0), Vector3(0, PLATFORM_TOP + 0.5, 0), Vector3.ZERO, 12)
+	static_cyl(root, 0.72, 1.0, Vector3(0, PLATFORM_TOP + 0.5, 0))
 	arm_root = Node3D.new()
 	root.add_child(arm_root)
 	arm_root.position = Vector3(0, PLATFORM_TOP + 0.32, 0)
@@ -55,10 +56,11 @@ func arm_tta(p: Vector3) -> float:
 
 
 func _advance(dt: float) -> void:
-	arm_speed = lerpf(1.5, 3.3, clampf(m.lt / 32.0, 0.0, 1.0))
+	# cân bằng lại sau khi có đẩy nhau: tốc độ tối đa 3.3 → 2.8 (bot chết ~3,7 lần/cửa → ~2,5)
+	arm_speed = lerpf(1.4, 2.8, clampf(m.lt / 32.0, 0.0, 1.0))
 	if surge > 0.0:
 		surge -= dt
-		arm_speed *= 1.7
+		arm_speed *= 1.35
 	arm_angle += arm_speed * dt
 	arm_root.rotation.y = arm_angle
 	for sw in saws:

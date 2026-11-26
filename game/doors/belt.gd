@@ -49,6 +49,7 @@ func setup(level_root: Node3D) -> void:
 	var steel := Build.grime(Color(0.30, 0.29, 0.25), 0.6, 0.8, 0.5, 14.0)
 	Build.box(root, Vector3(BELT_L + 0.4, BELT_TOP - 0.06, BELT_W + 0.5), frame, Vector3(0, (BELT_TOP - 0.06) / 2.0, 0))
 	Build.box(root, Vector3(BELT_L, 0.06, BELT_W), Build.mat(Color(0.035, 0.035, 0.035), 0.85), Vector3(0, BELT_TOP - 0.03, 0))
+	static_box(root, Vector3(BELT_L + 0.4, BELT_TOP, BELT_W + 0.5), Vector3(0, BELT_TOP / 2.0, 0), LAYER_FLOOR)
 	for s in [-1.0, 1.0]:
 		Build.box(root, Vector3(BELT_L + 0.4, 0.22, 0.2), hazard, Vector3(0, BELT_TOP + 0.05, s * (BELT_W / 2.0 + 0.2)))
 	for i in 12:
@@ -70,9 +71,11 @@ func setup(level_root: Node3D) -> void:
 	Build.omni(root, Vector3(sx - 0.8, BELT_TOP + 1.0, 0), Color(1.0, 0.1, 0.05), 3.0, 5.5)
 	belt_v = 1.3
 	crate_t = 1.2
+	# cùng khoảng cách tới đầu nạp thùng; làn xuất phát xáo theo seed
+	var lanes := shuffled([0, 1, 2, 3])
 	for i in 4:
-		var s := m.spawn_subject(i, Vector3(-2.6 + 0.5 * (i % 2), BELT_TOP, -1.65 + i * 1.1))
-		s.brain.home_x = -2.2 + 0.6 * i
+		var s := m.spawn_subject(i, Vector3(-2.3, BELT_TOP, -1.65 + int(lanes[i]) * 1.1))
+		s.brain.home_x = -1.6
 
 
 func _move_belt(dt: float) -> void:
@@ -98,7 +101,12 @@ func _move_belt(dt: float) -> void:
 func _spawn_crate(cid: int, hw: float, cz: float, x: float) -> void:
 	var node := Build.box(root, Vector3(0.7, 0.7, hw * 2.0), Build.grime(Color(0.40, 0.29, 0.16), 0.1, 0.8, 0.0, 16.0, 0.9), Vector3(x, BELT_TOP + 0.35, cz))
 	Build.box(node, Vector3(0.72, 0.08, hw * 2.0 + 0.02), Build.mat(Color(0.12, 0.10, 0.07), 0.8), Vector3(0, 0.2, 0))
-	crates.append({"n": node, "x": x, "z": cz, "hw": hw, "id": cid})
+	moving_body(node, _box_shape(Vector3(0.7, 0.7, hw * 2.0)))
+	# mỗi bot có 14% không kịp né thùng này (cờ ngẫu nhiên riêng từng ghế — hàm băm theo số ghế bị lệch)
+	var miss := []
+	for i in 4:
+		miss.append(randf() < 0.14)
+	crates.append({"n": node, "x": x, "z": cz, "hw": hw, "id": cid, "miss": miss})
 
 
 func _crunch(c: Dictionary) -> void:
@@ -207,7 +215,7 @@ func bot_steer(s: Subject, b: BotBrain, _dt: float, _arrived: bool, retarget: bo
 	var best_dx := 3.2
 	for c in crates:
 		var dx: float = p.x - float(c.x)
-		if dx > -0.3 and dx < best_dx and absf(p.z - float(c.z)) < float(c.hw) + 0.55 and Build.hash1(float(c.id) * 3.7 + float(s.idx)) > 0.14:
+		if dx > -0.3 and dx < best_dx and absf(p.z - float(c.z)) < float(c.hw) + 0.55 and not bool(c.miss[s.idx]):
 			best_dx = dx
 			var side := 1.0 if p.z >= float(c.z) else -1.0
 			var zt := float(c.z) + side * (float(c.hw) + 0.8)

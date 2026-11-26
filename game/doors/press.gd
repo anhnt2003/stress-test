@@ -40,10 +40,11 @@ func setup(level_root: Node3D) -> void:
 	Build.ball(press, 0.12, beacon_mat, Vector3(0.85, 1.4, 0.85))
 	Build.ball(press, 0.12, beacon_mat, Vector3(-0.85, 1.4, 0.85))
 	press_light = Build.omni(press, Vector3(0, -0.3, 1.6), Color(1.0, 0.1, 0.05), 0.0, 7.0)
+	moving_body(press, _box_shape(Vector3(2.4, 1.3, 2.4)), Vector3(0, 0.65, 0))
 	Build.box(root, Vector3(2.0, 0.7, 2.0), Build.grime(Color(0.16, 0.15, 0.13), 0.5, 0.7, 0.5), Vector3(PRESS_POS.x, 5.05, PRESS_POS.y))
 	press.position = Vector3(PRESS_POS.x, PRESS_HIGH, PRESS_POS.y)
 	press_stage = 0
-	var spots := [Vector2(-1.5, 1.6), Vector2(-0.4, -1.9), Vector2(-2.5, -0.4), Vector2(2.3, 1.9)]
+	var spots := shuffled([Vector2(-1.5, 1.6), Vector2(-0.4, -1.9), Vector2(-2.5, -0.4), Vector2(2.3, 1.9)])
 	for i in 4:
 		m.spawn_subject(i, Vector3(spots[i].x, PLATFORM_TOP, spots[i].y))
 

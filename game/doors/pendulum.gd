@@ -76,7 +76,7 @@ func _move_zone() -> void:
 			break
 	zone_pos = q
 	zone_node.position = Vector3(q.x, PLATFORM_TOP, q.y)
-	zone_t = lerpf(5.5, 3.6, k_round())
+	zone_t = lerpf(5.5, 4.0, k_round())
 	zone_grace = 1.7
 	for s in subjects():
 		s.brain.flee = randf() < 0.85
@@ -108,7 +108,7 @@ func tick(dt: float) -> void:
 			s.scared = true
 			if zone_grace <= 0.0:
 				s.outside_t += dt
-				if s.outside_t > 0.9:
+				if s.outside_t > 1.2:
 					m.kill(s, "headpop")
 					m.announce("ĐỐI TƯỢNG %s: RỜI VÙNG CHỈ ĐỊNH." % m.subj_label(s))
 		else:

@@ -23,6 +23,7 @@ func _init(match_: MatchManager) -> void:
 func setup(level_root: Node3D) -> void:
 	super(level_root)
 	Build.box(root, Vector3(PAINT_W + 0.5, 0.5, PAINT_H + 0.5), Build.grime(Color(0.16, 0.15, 0.13), 0.5, 0.8, 0.5, 14.0), Vector3(0, 0.25, 0))
+	static_box(root, Vector3(PAINT_W + 0.5, PAINT_TOP, PAINT_H + 0.5), Vector3(0, PAINT_TOP / 2.0, 0), LAYER_FLOOR)
 	paint_owner = PackedInt32Array()
 	for iz in PAINT_H:
 		for ix in PAINT_W:
@@ -32,7 +33,7 @@ func setup(level_root: Node3D) -> void:
 			Build.box(root, Vector3(0.92, 0.06, 0.92), mt, Vector3(ix - PAINT_W / 2.0 + 0.5, 0.53, iz - PAINT_H / 2.0 + 0.5))
 			paint_mats.append(mt)
 			paint_owner.append(-1)
-	var corners := [Vector2(-1, 1), Vector2(1, -1), Vector2(-1, -1), Vector2(1, 1)]
+	var corners := shuffled([Vector2(-1, 1), Vector2(1, -1), Vector2(-1, -1), Vector2(1, 1)])
 	for i in 4:
 		m.spawn_subject(i, Vector3(corners[i].x * (PAINT_W / 2.0 - 0.5), PAINT_TOP, corners[i].y * (PAINT_H / 2.0 - 0.5)))
 

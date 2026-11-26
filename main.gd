@@ -4,7 +4,8 @@ extends Node3D
 ## Luật chơi: game/match · cửa: game/doors · nhân vật + bot: game/actors · input: game/input
 ## Hình ảnh: game/world, game/ui, game/fx · âm thanh: game/audio · Cỗ Máy: game/machine · mạng: game/net
 
-const SIM_DT := 1.0 / 30.0
+## Luật chơi chạy trong _physics_process (60 bước/giây) để truy vấn va chạm luôn thấy trạng thái mới nhất.
+## Chạy không màn hình nhanh hơn thời gian thực: thêm `--fixed-fps 60` trước dấu `--`.
 
 var cli := {}
 var settings: Settings
@@ -18,6 +19,7 @@ var net: NetSession
 var flow: Flow
 var frozen := false
 var _quit_t := -1.0
+var _shot_until := -1.0
 
 
 func _ready() -> void:
@@ -51,7 +53,8 @@ func _ready() -> void:
 	flow.setup(self)
 	_quit_t = float(cli.quit_after)
 	if cli.balance > 0:
-		Balance.run(self, int(cli.balance))
+		frozen = true
+		await Balance.run(self, int(cli.balance))
 		get_tree().quit()
 	elif shot:
 		voice.tts_enabled = false
@@ -77,9 +80,14 @@ func _process(delta: float) -> void:
 		_quit_t -= delta
 		if _quit_t <= 0.0:
 			get_tree().quit()
+
+
+func _physics_process(delta: float) -> void:
 	if frozen:
 		return
-	step(minf(delta, 0.05))
+	step(delta)
+	if _shot_until >= 0.0 and m.t >= _shot_until - 0.0001:
+		_finish_shot()
 
 
 # ---------- chế độ chụp ảnh / mô phỏng không màn hình ----------
@@ -95,8 +103,13 @@ func _run_shot() -> void:
 		m.start_match()
 	else:
 		m.load_door(maxi(int(cli.door), 0), false)
-	for i in int(float(cli.phase) * 30.0):
-		step(SIM_DT)
+	_shot_until = float(cli.phase)
+	if _shot_until <= 0.0:
+		_finish_shot()
+
+
+func _finish_shot() -> void:
+	_shot_until = -1.0
 	frozen = true
 	m.log_events = false
 	if cli.closeup:

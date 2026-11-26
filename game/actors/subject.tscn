@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://tms2xpjjce6p" path="res://game/actors/subject.gd" id="1_subject"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.28
+height = 1.6
+
+[node name="Subject" type="CharacterBody3D"]
+collision_mask = 3
+motion_mode = 1
+script = ExtResource("1_subject")
+
+[node name="Body" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+shape = SubResource("CapsuleShape3D_body")

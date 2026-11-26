@@ -42,7 +42,7 @@ func setup(level_root: Node3D) -> void:
 	core_display = Build.label3d(root, "10", Vector3(-3.9, 2.17, -5.42), 230, Color(1.0, 0.12, 0.08), 0.0062)
 	core_display.shaded = false
 	core_timer = FUSE
-	core_holder = 1
+	core_holder = randi() % 4   # người cầm lõi đầu tiên chọn theo seed, không cố định một ghế
 	core_cd = 0.0
 	core_wait = 0.0
 	spawn_circle(2.5, 0.3)

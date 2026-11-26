@@ -1,5 +1,6 @@
 class_name Cli
-## Đọc tham số dòng lệnh (sau dấu `--`).
+## Đọc tham số dòng lệnh (sau dấu `--`). Chạy không màn hình nên thêm `--fixed-fps 60` (tham số của Godot,
+## đặt trước dấu `--`) để mô phỏng chạy nhanh hơn thời gian thực.
 ##   --shot=PATH       chụp ảnh màn hình rồi thoát (không màn hình thì chỉ chạy mô phỏng)
 ##   --phase=SEC       chạy trước SEC giây mô phỏng trước khi chụp
 ##   --door=N          vào thẳng cửa N (1..10)

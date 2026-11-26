@@ -32,6 +32,7 @@ const ORDER := [
 	preload("res://game/doors/fire.gd"),
 ]
 const LobbyRoom := preload("res://game/doors/lobby_room.gd")
+const SUBJECT_SCENE := preload("res://game/actors/subject.tscn")
 
 var seats := Seats.new()
 var gore: Gore
@@ -116,7 +117,7 @@ func load_door(d: int, intro: bool) -> void:
 
 
 func spawn_subject(i: int, pos: Vector3) -> Subject:
-	var s := Subject.new()
+	var s: Subject = SUBJECT_SCENE.instantiate()
 	level_root.add_child(s)
 	s.setup(i, pos, seats.looks[i])
 	subjects.append(s)
@@ -156,6 +157,7 @@ func kill(s: Subject, mode: String, dir := Vector3.ZERO, count := true) -> void:
 	s.flat = 0.0
 	s.doom = -1.0
 	s.tag.visible = false
+	s.set_solid(false)
 	gore.death(s, mode, dir, pos)
 	killed.emit(s, mode, dir, pos)
 
@@ -247,15 +249,11 @@ func _try_sabotage(s: Subject) -> void:
 
 func respawn(s: Subject) -> void:
 	# đối tượng thay thế được thả xuống từ ống trên trần; xác cũ nằm lại
-	var mode := s.dead_mode
-	if s.pivot.visible and door.keep_corpses and (mode == "halved" or mode == "headpop" or mode == "fry"):
-		corpses.append(s.detach_model(level_root))
+	var corpse := s.clear_for_respawn(door.keep_corpses)
+	if corpse:
+		corpses.append(corpse)
 		if corpses.size() > 7:
 			(corpses.pop_front() as Node3D).queue_free()
-	else:
-		var old := s.pivot
-		s.remove_child(old)
-		old.queue_free()
 	var sp := door.spawn_point()
 	s.position = sp + Vector3(0, 4.0, 0)
 	s.build_model()
@@ -269,6 +267,7 @@ func respawn(s: Subject) -> void:
 	s.brain.target = sp
 	s.ground = false
 	s.hit_cd = 1.2
+	s.set_solid(true)
 	respawned.emit(s)
 
 
@@ -312,11 +311,13 @@ func _update_subject(s: Subject, dt: float) -> void:
 		s.stun -= dt
 		d = Vector3.ZERO
 	var kn := s.knock
-	p += d * s.speed * dt + kn * dt
+	var motion := d * s.speed * dt + kn * dt
 	s.knock = kn.move_toward(Vector3.ZERO, 16.0 * dt)
 	if s.ground:
-		p += door.surface_velocity(s) * dt
-	p = door.constrain(s, p)
+		motion += door.surface_velocity(s) * dt
+	# va chạm ngang với người khác và chướng ngại vật qua physics engine; mặt sàn tính theo cửa
+	s.slide(motion)
+	p = door.constrain(s, Vector3(s.position.x, p.y, s.position.z))
 	var g := door.ground_y(p)
 	var vy := s.vy
 	vy -= Subject.GRAVITY * dt

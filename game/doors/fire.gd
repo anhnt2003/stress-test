@@ -73,7 +73,8 @@ func _flames(k: float) -> void:
 
 func tick(dt: float) -> void:
 	var k := k_round()
-	fire_r = lerpf(3.2, 0.62, smoothstep(0.0, 1.0, k))
+	# cân bằng lại: vùng nhỏ nhất 0.62 → 0.8 để 4 người còn chỗ đứng khi bị đẩy
+	fire_r = lerpf(3.2, 0.8, smoothstep(0.0, 1.0, k))
 	if squeeze > 0.0:
 		squeeze -= dt
 		fire_r = maxf(0.55, fire_r - 0.6 * minf(1.0, squeeze))

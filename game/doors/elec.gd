@@ -39,6 +39,7 @@ func elec_at(p: Vector3) -> int:
 func setup(level_root: Node3D) -> void:
 	super(level_root)
 	Build.box(root, Vector3(EW * ES + 0.5, 0.5, EH * ES + 0.5), Build.grime(Color(0.14, 0.13, 0.11), 0.5, 0.8, 0.5, 14.0), Vector3(0, 0.25, 0))
+	static_box(root, Vector3(EW * ES + 0.5, ELEC_TOP, EH * ES + 0.5), Vector3(0, ELEC_TOP / 2.0, 0), LAYER_FLOOR)
 	for iz in EH:
 		for ix in EW:
 			var mt := Build.grime(Color(0.30, 0.30, 0.27), 0.35, 0.8, 0.7, 12.0, 0.45)
@@ -57,7 +58,7 @@ func setup(level_root: Node3D) -> void:
 	elec_light = Build.omni(root, Vector3(0, 1.8, 0), Color(0.6, 0.82, 1.0), 0.0, 10.0)
 	elec_phase = 0
 	elec_t = 2.0
-	var spots := [Vector2i(1, 3), Vector2i(4, 1), Vector2i(1, 1), Vector2i(4, 3)]
+	var spots := shuffled([Vector2i(1, 3), Vector2i(4, 1), Vector2i(1, 1), Vector2i(4, 3)])
 	for i in 4:
 		m.spawn_subject(i, elec_center(spots[i].x, spots[i].y))
 

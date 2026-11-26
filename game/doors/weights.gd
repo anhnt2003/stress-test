@@ -29,6 +29,7 @@ func setup(level_root: Node3D) -> void:
 		Build.cyl(n, 0.3, 0.5, 0.3, steel, Vector3(0, 0.95, 0), Vector3.ZERO, 10)
 		Build.cyl(n, 0.045, 0.045, 5.0, Build.mat(Palette.STEEL_DARK, 0.5, 0.7), Vector3(0, 3.6, 0), Vector3.ZERO, 5)
 		n.position = Vector3(0, TOP, 0)
+		var body := moving_body(n, _cyl_shape(0.82, 0.8), Vector3(0, 0.4, 0), LAYER_FLOOR)
 		var ring := Node3D.new()
 		root.add_child(ring)
 		var tr := Build.torus(ring, 0.80, 0.90, Build.glow(Color(1.0, 0.08, 0.04), 2.5), Vector3(0, 0.02, 0))
@@ -38,7 +39,7 @@ func setup(level_root: Node3D) -> void:
 		sm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		var sd := Build.add_mesh(ring, m.gore.disc_mesh, sm, Vector3(0, 0.014, 0))
 		ring.visible = false
-		weights.append({"n": n, "ring": ring, "shadow": sd, "state": 0, "timer": 0.0, "pos": Vector2.ZERO, "id": i})
+		weights.append({"n": n, "ring": ring, "shadow": sd, "state": 0, "timer": 0.0, "pos": Vector2.ZERO, "id": i, "body": body, "miss": [false, false, false, false]})
 	weight_t = 1.5
 	weight_id = 10
 	spawn_circle(2.0, 0.9)
@@ -48,6 +49,11 @@ func _arm(w: Dictionary, q: Vector2) -> void:
 	weight_id += 1
 	w.pos = q
 	w.id = weight_id
+	# mỗi bot có 17% không để ý quả tạ này (cờ ngẫu nhiên riêng từng ghế)
+	var miss := []
+	for i in 4:
+		miss.append(randf() < 0.17)
+	w.miss = miss
 	w.state = 1
 	w.timer = 0.95
 	(w.ring as Node3D).position = Vector3(q.x, PLATFORM_TOP, q.y)
@@ -145,7 +151,10 @@ func tick(dt: float) -> void:
 					var p2 := s.position
 					if Vector2(p2.x, p2.z).distance_to(wp) < 1.0:
 						s.scared = true
-	# tạ đang nằm trên sàn thì chắn đường
+	# tạ đang nằm trên sàn thì chắn đường (qua physics engine, kèm đẩy ra cho chắc)
+	for w in weights:
+		var blocking: bool = w.state == 3 or (w.state == 4 and w.timer > 0.55)
+		(w.body as AnimatableBody3D).collision_layer = (LAYER_OBSTACLE | LAYER_FLOOR) if blocking else LAYER_FLOOR
 	for s in subjects():
 		if s.out > 0.0:
 			continue
@@ -167,7 +176,7 @@ func bot_steer(s: Subject, b: BotBrain, _dt: float, _arrived: bool, retarget: bo
 	var flat := Vector2(s.position.x, s.position.z)
 	var fleeing := false
 	for w in weights:
-		if (w.state == 1 or w.state == 2) and flat.distance_to(w.pos) < 1.3 and Build.hash1(float(w.id) * 1.3 + float(s.idx) * 7.7) > 0.17:
+		if (w.state == 1 or w.state == 2) and flat.distance_to(w.pos) < 1.3 and not bool(w.miss[s.idx]):
 			var away8: Vector2 = flat - (w.pos as Vector2)
 			if away8.length() < 0.05:
 				away8 = Vector2(1, 0).rotated(float(s.idx) * 1.7)
