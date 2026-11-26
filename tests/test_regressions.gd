@@ -53,7 +53,7 @@ func run_async(t) -> void:
 	app.flow.start_match()
 	t.check("có --seed thì giữ nguyên seed", app.m.seed_base, 42)
 	# Máy khách về sảnh (không qua Flow): lời bình cũ và câu tổng kết 999 giây bị bỏ
-	app.voice._queue.append({"text": "CÂU CŨ", "at": 0.0, "dur": 3.0})
+	app.voice._queue.append({"t": 0.0, "text": "CÂU CŨ", "dur": 3.0})
 	app.voice._final = true
 	app.m.load_lobby()
 	t.ok("nạp sảnh: bỏ lời bình cũ và cờ tổng kết", app.voice._queue.is_empty() and not app.voice._final)
@@ -194,6 +194,17 @@ func run_async(t) -> void:
 	net3.mode = ""
 	net3.queue_free()
 	m.remote = false
+	# Máy khách: quả tạ được treo ở chỗ mới thì đặt ngay vào chỗ đó (không lướt từ chỗ cũ)
+	m.load_door(5, false)
+	var wd = m.door
+	var w0: Dictionary = wd.weights[0]
+	var ent := []
+	for w in wd.weights:
+		ent.append([int(w.state), float(w.timer), w.pos, int(w.id)])
+	ent[0] = [1, 0.9, Vector2(1.2, -0.8), int(w0.id) + 1]
+	wd.apply_net_state({"w": ent})
+	var wn: Node3D = w0.n
+	t.ok("quả tạ treo lại: đặt ngay ở chỗ mới", absf(wn.position.x - 1.2) < 0.05 and absf(wn.position.z + 0.8) < 0.05 and (w0.ring as Node3D).visible)
 	# Collider của máy ép đi theo máy ép (không nằm lại giữa sàn)
 	m.load_door(0, false)
 	for i in 4:
@@ -308,5 +319,10 @@ func run(t) -> void:
 		{"name": "eth0", "friendly": "eth0", "addresses": ["10.1.1.20"]},
 	]
 	t.check("Linux: eth0 trước ZeroTier, bridge LXC cuối", RoomCode.rank_candidates(lin), ["10.1.1.20", "10.147.17.9", "10.0.3.1"])
+	var ics := [
+		{"name": "{J1}", "friendly": "Local Area Connection* 12", "addresses": ["192.168.137.1"]},
+		{"name": "{K2}", "friendly": "Ethernet", "addresses": ["10.0.0.7"]},
+	]
+	t.check("Windows: điểm phát Wi-Fi 192.168.137.x xếp sau LAN 10.x", RoomCode.rank_candidates(ics), ["10.0.0.7", "192.168.137.1"])
 	# Ô vào phòng: localhost kèm cổng
 	t.check("localhost:cổng", RoomCode.parse_address("localhost:9000", 24555), {"ip": "127.0.0.1", "port": 9000})

@@ -231,7 +231,12 @@ func apply_net_state(st: Dictionary) -> void:
 		var e: Array = ws[i]
 		if int(e[0]) == 3 and int(w.state) == 2:
 			m.shake(0.6)
+		var rearmed := int(e[3]) != int(w.id)
 		w.state = int(e[0])
 		w.timer = float(e[1])
 		w.pos = e[2]
 		w.id = int(e[3])
+		if rearmed:   # quả tạ được treo ở chỗ mới: đặt ngay và không lướt từ chỗ cũ (như _arm trên máy chủ)
+			_pose(w)
+			(w.n as Node3D).reset_physics_interpolation()
+			(w.ring as Node3D).reset_physics_interpolation()

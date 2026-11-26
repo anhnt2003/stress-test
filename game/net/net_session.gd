@@ -689,6 +689,7 @@ func client_step(dt: float) -> void:
 		if s.out > 0.0:
 			s.dead_t += dt
 			s.out = maxf(0.01, s.out - dt)
+			m.gore.bleed(s)   # máu phun tiếp ở cổ / thân bị cắt như máy chủ (gore dùng rng riêng)
 		if s.idx == my_seat and s.out <= 0.0 and m.state == MatchManager.ST_PLAY:
 			_predict(s, dt)
 		else:

@@ -115,7 +115,7 @@ static func rank_candidates(ifaces: Array) -> Array[String]:
 			if ip.ends_with(".0") or ip.ends_with(".255"):
 				continue   # địa chỉ mạng / broadcast, không phải địa chỉ máy
 			var rank := 4
-			if _name_has(nm, VIRTUAL_HINTS, true):
+			if _name_has(nm, VIRTUAL_HINTS, true) or ip.begins_with("192.168.137."):   # .137: điểm phát Wi-Fi / ICS của Windows
 				rank = 9
 			elif _is_cgnat(ip) or _name_has(nm, VPN_HINTS, false):
 				rank = 2
