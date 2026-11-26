@@ -9,7 +9,9 @@ class_name Cli
 ##   --closeup         camera cận cảnh 4 đối tượng
 ##   --seed=N          đổi seed của trận (mặc định cố định để smoke test lặp lại được)
 ##   --no-sabotage     tắt nút chơi xấu (bot không dùng)
-##   --host[=PORT]     mở phòng mạng ngay khi chạy;  --join=ADDR  vào phòng (mã phòng hoặc IP[:cổng])
+##   --host[=PORT]     mở phòng LAN ngay khi chạy;  --join=ADDR  vào phòng (mã online, mã LAN hoặc IP[:cổng])
+##   --host-online     mở phòng online (WebRTC qua máy chủ mai mối)
+##   --signal=URL      địa chỉ máy chủ mai mối, vd ws://127.0.0.1:28787/ws khi chạy signaling/ trên máy
 ##   --name=TÊN        tên người chơi khi vào phòng
 ##   --autostart=SEC   (máy chủ) tự bắt đầu trận sau SEC giây — dùng cho kiểm thử mạng
 ##   --quit-after=SEC  tự thoát sau SEC giây thời gian thực
@@ -22,7 +24,8 @@ class_name Cli
 static func parse(args: PackedStringArray) -> Dictionary:
 	var o := {"shot": "", "phase": 0.0, "door": -1, "match": false, "lobby": false, "menu": false, "closeup": false,
 		"seed": 0, "sabotage": true, "host": -1, "join": "", "name": "", "autostart": -1.0, "quit_after": -1.0,
-		"net_lag": 0, "balance": 0, "net_test": false, "settings": false, "gore": true, "debug_keys": false}
+		"net_lag": 0, "balance": 0, "net_test": false, "settings": false, "gore": true, "debug_keys": false,
+		"host_online": false, "signal": ""}
 	for a in args:
 		var kv := a.split("=", true, 1)
 		var k := kv[0]
@@ -48,4 +51,6 @@ static func parse(args: PackedStringArray) -> Dictionary:
 			"--settings": o.settings = true
 			"--no-gore": o.gore = false
 			"--debug-keys": o.debug_keys = true
+			"--host-online": o.host_online = true
+			"--signal": o.signal = v
 	return o

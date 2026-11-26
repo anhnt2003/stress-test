@@ -35,6 +35,15 @@ jobs:
           mv /tmp/tpl/templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
           rm -f godot.zip templates.tpz
 
+      - name: Plugin WebRTC và địa chỉ máy chủ mai mối (bản desktop cũng chơi online được)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SIGNAL_URL: ${{ vars.SIGNAL_URL }}
+        run: |
+          tools/fetch_webrtc.sh
+          tools/signal_url.sh
+
       - name: Import tài nguyên
         run: godot --headless --path . --import
 

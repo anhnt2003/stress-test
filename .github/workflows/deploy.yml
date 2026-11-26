@@ -1,0 +1,106 @@
+name: Deploy
+
+# Sau khi CI trên main xanh: triển khai máy chủ mai mối (signaling/) lên Cloudflare Workers, xuất bản bản web
+# và đưa lên GitHub Pages. Cần làm một lần (xem README, mục "Chơi trên web"):
+#   - Settings → Pages → Source: GitHub Actions
+#   - Secrets CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID (thiếu thì bản web vẫn lên Pages, chỉ không có phòng online)
+#   - (tuỳ chọn) biến SIGNAL_URL nếu máy chủ mai mối dùng tên miền riêng
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      GODOT_VERSION: 4.4.1
+      WRANGLER_SEND_METRICS: "false"
+      # secrets không dùng trực tiếp trong `if:` được, nên đưa vào biến môi trường của job
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      SIGNAL_URL: ${{ vars.SIGNAL_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # workflow_run chạy trên nhánh mặc định: lấy đúng commit CI vừa kiểm thử
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: signaling/package-lock.json
+
+      - name: Triển khai máy chủ mai mối lên Cloudflare Workers
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        working-directory: signaling
+        run: |
+          npm ci --no-audit --no-fund
+          npx wrangler deploy
+
+      - name: Ghi địa chỉ máy chủ mai mối vào game
+        run: tools/signal_url.sh
+
+      - name: Tải Godot
+        run: |
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
+          rm godot.zip
+
+      - name: Export template cho web (lưu cache, khỏi tải lại 1 GB mỗi lần)
+        id: tpl
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          key: godot-web-templates-${{ env.GODOT_VERSION }}
+
+      - name: Tải export template cho web
+        if: steps.tpl.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL -o templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          unzip -q templates.tpz "templates/web_nothreads_release.zip" "templates/web_nothreads_debug.zip" "templates/version.txt" -d /tmp/tpl
+          mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mv /tmp/tpl/templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
+          rm -f templates.tpz
+
+      - name: Xuất bản bản web
+        run: |
+          godot --headless --path . --import 2>&1 | tee import.log
+          if grep -q "SCRIPT ERROR" import.log; then echo "::error::Có lỗi script khi import"; exit 1; fi
+          mkdir -p build/web
+          godot --headless --path . --export-release "Web" build/web/index.html 2>&1 | tee export.log
+          test -f build/web/index.wasm && test -f build/web/index.pck
+          touch build/web/.nojekyll
+          ls -la build/web
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+      - name: Đưa lên GitHub Pages
+        id: pages
+        uses: actions/deploy-pages@v4

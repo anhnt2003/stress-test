@@ -11,7 +11,7 @@ Engine: Godot 4.4 (GDScript).
 | 1 — Tách kiến trúc | Xong: `main.gd` 143 dòng, 10 cửa mỗi cửa một file, buồng thử và HUD là `.tscn`; trận mô phỏng khớp bản mẫu |
 | 2 — Chơi chung một máy | Xong phần code: menu chính, sảnh chọn mũ / màu áo, tạm dừng, chơi lại. Chưa chơi thử 4 người thật |
 | 3 — Vật lý và tương tác | Xong phần code: CharacterBody3D, ragdoll, chơi xấu từng cửa, cân bằng lại bằng bot. Dùng GodotPhysics3D thay Jolt (xem dưới). Chưa chơi thử với người thật |
-| 4 — Chơi qua mạng | Xong phần code: host-authoritative trên ENet, mã phòng, nội suy, dự đoán, rớt mạng thì bot thay, vào lại được. Đã chạy máy chủ + máy khách trên cùng máy (trễ giả lập 100 ms). Chưa thử 4 máy khác mạng; chưa có Steam lobby / relay |
+| 4 — Chơi qua mạng | Xong phần code: host-authoritative, LAN qua ENet (mã phòng IP + cổng) và online qua WebRTC (mã 6 ký tự, máy chủ mai mối Cloudflare Worker miễn phí, chạy cả trên web), nội suy, dự đoán, rớt mạng thì bot thay, vào lại được. Đã chạy máy chủ + máy khách trên cùng máy (trễ giả lập 100 ms), trình duyệt ↔ desktop qua WebRTC. Chưa thử 4 máy khác mạng; chưa có TURN / Steam lobby |
 | 5 — Hình ảnh và âm thanh | Phần lớn: 8 mũ, 3 biến thể buồng, tiếng chết riêng từng kiểu, nhạc nền, giọng Cỗ Máy (TTS), lời bình LLM. Chưa có model Blender, chưa bake ánh sáng |
 | 6 — Đóng gói | Phần lớn: workflow xuất bản 3 nền tảng + Release, màn cài đặt, bản nháp trang itch.io. Chưa tạo trang itch.io / Steam |
 
@@ -85,7 +85,10 @@ Mô hình: host-authoritative, High-level Multiplayer của Godot trên ENet.
 - [x] Nội suy vị trí phía khách. Dự đoán phía khách chỉ cho nhân vật của chính mình.
 - [x] Sự kiện chết, điểm, chuyển cửa gửi bằng RPC tin cậy.
 - [x] Vào phòng bằng mã (mã hoá IP + cổng, không cần máy chủ trung gian).
-- [ ] Steam lobby (GodotSteam) hoặc server relay nhỏ — **chờ quyết định phát hành qua Steam hay gửi bản build**.
+- [x] Chơi khác mạng không cần mở cổng: WebRTC + máy chủ mai mối (`signaling/`, Cloudflare Workers gói miễn phí),
+      bản web trên GitHub Pages, triển khai bằng `.github/workflows/deploy.yml`.
+- [ ] TURN cho mạng chặn kết nối trực tiếp (tốn phí theo băng thông) và/hoặc Steam lobby (GodotSteam) —
+      **chờ quyết định phát hành qua Steam hay itch.io**.
       Hiện tại chơi khác mạng cần mở cổng UDP 24555 hoặc VPN LAN (Tailscale, ZeroTier).
 - [x] Xử lý rớt mạng: người rớt thì bot thay, vào lại được giữa trận (nhận ra bằng token lưu trong cài đặt).
 - [ ] 4 máy khác mạng chơi trọn một trận ở độ trễ 100 ms — **cần 4 máy**. Đã kiểm: máy chủ + máy khách trên cùng máy,

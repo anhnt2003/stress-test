@@ -195,7 +195,7 @@ layout_mode = 0
 offset_left = 250.0
 offset_top = 170.0
 offset_right = 550.0
-offset_bottom = 370.0
+offset_bottom = 410.0
 theme_override_constants/separation = 8
 
 [node name="Local" type="Button" parent="Buttons"]
@@ -227,6 +227,21 @@ theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
 theme_override_fonts/font = ExtResource("2_hjbl3")
 theme_override_font_sizes/font_size = 18
 text = "TẠO PHÒNG QUA MẠNG"
+
+[node name="HostOnline" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(300, 32)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_mcftn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_cx13a")
+theme_override_styles/hover = SubResource("StyleBoxFlat_5vhoe")
+theme_override_styles/focus = SubResource("StyleBoxFlat_y6wp3")
+theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 1)
+theme_override_colors/font_focus_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.62, 0.15, 1)
+theme_override_fonts/font = ExtResource("2_hjbl3")
+theme_override_font_sizes/font_size = 18
+text = "TẠO PHÒNG ONLINE"
 
 [node name="Join" type="Button" parent="Buttons"]
 custom_minimum_size = Vector2(300, 32)

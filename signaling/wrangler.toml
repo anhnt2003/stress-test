@@ -1,0 +1,15 @@
+# Máy chủ mai mối cho chơi online (Cloudflare Workers, gói miễn phí: Durable Object dùng SQLite).
+name = "stress-test-signal"
+main = "src/index.js"
+compatibility_date = "2026-10-15"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
+
+# TURN (tuỳ chọn, cho mạng chặn kết nối trực tiếp): đặt TURN_URLS (vd "turn:a.example:3478,turns:a.example:443"),
+# TURN_USERNAME, TURN_CREDENTIAL bằng `wrangler secret put` hoặc trong trang quản lý Worker.

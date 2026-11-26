@@ -226,9 +226,11 @@ text = "QUAY LẠI"
 
 [node name="Help" type="Label" parent="."]
 layout_mode = 0
+offset_left = 20.0
 offset_top = 360.0
-offset_right = 1022.0
-offset_bottom = 383.0
+offset_right = 780.0
+offset_bottom = 400.0
+autowrap_mode = 3
 theme_override_fonts/font = ExtResource("2_4xbwj")
 theme_override_font_sizes/font_size = 10
 theme_override_colors/font_color = Color(0.8, 0.78, 0.7, 0.6)

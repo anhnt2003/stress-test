@@ -8,12 +8,18 @@ nhưng bị tính một lần chết. Hết 10 cửa, Cỗ Máy giữ lại mộ
 2. Mở Godot → Import → chọn `project.godot` → bấm F5.
 3. Hoặc tải bản build sẵn ở mục Releases (Windows / macOS / Linux).
    macOS: bản build chưa ký với Apple, lần đầu mở bằng chuột phải → Open.
+4. Hoặc chơi ngay trên trình duyệt (Chrome / Edge / Firefox): https://anhnt2003.github.io/stress-test/
+   (sau khi đã bật GitHub Pages, xem mục "Chơi trên web").
 
 ## Chơi
 - **Chơi chung một máy**: tối đa 4 người (2 bàn phím + tay cầm), ghế trống do bot ngồi.
-- **Tạo phòng qua mạng**: sảnh hiện mã phòng 10 ký tự (mã hoá IP + cổng). Người khác chọn **Vào phòng**, nhập mã.
-  Cùng mạng LAN thì vào được ngay; khác mạng thì máy chủ mở cổng UDP 24555 hoặc mọi người vào chung một VPN LAN
-  (Tailscale, ZeroTier). Ghế người rớt mạng do bot ngồi thay; vào lại từ cùng máy thì lấy lại ghế, kể cả giữa trận.
+- **Tạo phòng online** (web và desktop): sảnh hiện mã phòng 6 ký tự (vd `K7Q-2MX`). Người khác chọn
+  **Vào phòng qua mạng**, nhập mã, từ bất kỳ mạng nào. Các máy nối thẳng với nhau qua WebRTC, máy chủ mai mối
+  (Cloudflare Worker, miễn phí) chỉ giúp tìm nhau. Trên web, chủ phòng phải giữ tab game hiển thị: trình duyệt dừng
+  tab bị ẩn, nên game tự tạm dừng khi tab mất focus.
+- **Tạo phòng LAN** (chỉ desktop): mã phòng 10 ký tự (mã hoá IP + cổng). Cùng mạng LAN thì vào được ngay; khác
+  mạng thì máy chủ mở cổng UDP 24555 hoặc dùng VPN LAN (Tailscale, ZeroTier).
+- Cả hai kiểu phòng: ghế người rớt mạng do bot ngồi thay; vào lại từ cùng máy thì lấy lại ghế, kể cả giữa trận.
 
 | Thiết bị | Di chuyển | Nhảy | Đẩy | Chơi xấu |
 |---|---|---|---|---|
@@ -70,7 +76,9 @@ game/match/        match_manager.gd (máy trạng thái, luật chung), scoring.
 game/doors/        door_base.gd + 10 cửa, mỗi cửa một file (luật, bot, mặt sàn, chơi xấu, trạng thái mạng)
 game/actors/       subject.tscn/.gd (CharacterBody3D), subject_model.gd (hình nhân, mũ), bot_brain.gd, ragdoll.gd
 game/input/        input_source.gd + bàn phím / tay cầm / bot, seats.gd, input_router.gd
-game/net/          net_session.gd (ENet, host-authoritative), room_code.gd, snapshot_buffer.gd, net_source.gd
+game/net/          net_session.gd (host-authoritative, ENet hoặc WebRTC), online_link.gd (WebRTC + mai mối),
+                   online_config.gd, room_code.gd (mã LAN), snapshot_buffer.gd, net_source.gd
+signaling/         máy chủ mai mối cho phòng online: Cloudflare Worker + Durable Object (JavaScript)
 game/world/        chamber_09/13/21.tscn (buồng thử, sửa trong editor), chamber.gd
 game/ui/           hud, result_panel, intro_banner, lobby_panel, main_menu, pause_menu, settings_menu, join_dialog (.tscn)
 game/fx/           gore.gd (máu me, RNG riêng), camera_fx.gd
@@ -79,7 +87,7 @@ game/machine/      machine_voice.gd (lời bình, TTS), machine_lines.gd (câu d
 audio/             âm thanh tổng hợp bằng tools/gen_sfx.py (không dùng sample ngoài), có nhạc nền lặp
 shaders/ fonts/    shader bề mặt bẩn, hậu kỳ sepia + dither; font Anton (OFL)
 tests/             run_all.gd + test_*.gd
-tools/             gen_sfx.py, migrate_scenes.gd (công cụ chuyển một lần từ code sang .tscn)
+tools/             gen_sfx.py, migrate_scenes.gd, fetch_webrtc.sh (plugin WebRTC desktop), signal_url.sh
 docs/              PLAN.md (kế hoạch, tiến độ), BALANCE.md, STORE_PAGE.md
 ```
 
@@ -92,16 +100,39 @@ godot --headless --fixed-fps 60 --path . -- --balance=32             # thống k
 godot --fixed-fps 60 --path . -- --shot=out.png --door=3 --phase=8   # chụp ảnh cửa 3 ở giây thứ 8
 godot --path . -- --host --autostart=3                               # mở phòng, tự bắt đầu sau 3 giây
 godot --path . -- --join=MÃ-PHÒNG --name=TÊN --net-lag=100           # vào phòng, giả lập trễ 100 ms
+(cd signaling && npm ci && npm run dev)                              # máy chủ mai mối trên máy (Node 22+)
+tools/fetch_webrtc.sh                                                # plugin WebRTC cho desktop (không commit)
+godot --path . -- --host-online --signal=ws://127.0.0.1:28787/ws     # mở phòng online qua máy chủ trên máy
+godot --path . -- --join=K7Q-2MX --signal=ws://127.0.0.1:28787/ws    # vào phòng online
 python3 tools/gen_sfx.py                                             # sinh lại âm thanh (cần numpy)
 ```
 Mọi tham số: xem đầu file `game/core/cli.gd`. Chạy không màn hình nên thêm `--fixed-fps 60` (trước dấu `--`)
 để mô phỏng chạy nhanh hơn thời gian thực.
 
-Phát hành: đẩy tag `vX.Y.Z` → workflow `release.yml` xuất bản Windows / macOS / Linux và gắn vào GitHub Release;
-có `BUTLER_API_KEY` (secret) và `ITCH_TARGET` (biến, dạng `user/game`) thì đẩy lên itch.io luôn.
+Phát hành: đẩy tag `vX.Y.Z` → workflow `release.yml` xuất bản Windows / macOS / Linux (kèm plugin WebRTC để chơi
+online) và gắn vào GitHub Release; có `BUTLER_API_KEY` (secret) và `ITCH_TARGET` (biến, dạng `user/game`) thì đẩy
+lên itch.io luôn.
+
+## Chơi trên web (CI/CD bằng GitHub Actions, miễn phí)
+Mỗi lần push lên `main` và CI xanh, workflow `deploy.yml` triển khai máy chủ mai mối lên Cloudflare Workers, xuất
+bản bản web (Godot, không dùng luồng nên không cần header COOP/COEP) và đưa lên GitHub Pages. Cài đặt một lần:
+1. GitHub → Settings → Pages → Build and deployment → Source: **GitHub Actions**.
+2. Tạo tài khoản Cloudflare (miễn phí), mở **Workers & Pages** một lần để chọn subdomain `workers.dev`.
+3. Cloudflare → My Profile → API Tokens → Create Token → mẫu **Edit Cloudflare Workers**. Lấy Account ID ở trang
+   Workers & Pages.
+4. GitHub → Settings → Secrets and variables → Actions → thêm secret `CLOUDFLARE_API_TOKEN` và
+   `CLOUDFLARE_ACCOUNT_ID`. Chạy lại workflow **Deploy** (Actions → Deploy → Run workflow).
+
+Thiếu bước 2–4 thì bản web vẫn lên Pages và chơi một máy được, chỉ ẩn mục phòng online. Máy chủ mai mối dùng tên
+miền riêng thì đặt biến `SIGNAL_URL` (vd `wss://signal.example.com/ws`). Mặc định chỉ dùng STUN miễn phí; khoảng
+một phần nhỏ mạng (4G, mạng công ty) chặn kết nối trực tiếp và cần TURN: đặt `TURN_URLS`, `TURN_USERNAME`,
+`TURN_CREDENTIAL` cho Worker (`npx wrangler secret put ...` trong `signaling/`) bằng tài khoản của một dịch vụ TURN.
+Gói miễn phí của Cloudflare Workers / Durable Objects giới hạn 100.000 yêu cầu mỗi ngày, dư cho chơi với bạn bè.
 
 ## Giới hạn hiện tại
 - Chưa chơi thử với người thật: điều khiển, cảm giác đẩy nhau, độ khó mới đo bằng bot (docs/BALANCE.md).
-- Chơi khác mạng cần mở cổng hoặc VPN LAN; chưa có Steam lobby hay máy chủ relay.
+- Phòng online nối thẳng giữa các máy (không có máy chủ chuyển tiếp TURN mặc định): mạng quá chặt thì không vào
+  được. Chủ phòng trên web phải giữ tab hiển thị. Chưa có Steam lobby.
+- Bản web dùng renderer Compatibility (WebGL2) nên ánh sáng khác bản desktop một chút; lần đầu tải khoảng 45 MB.
 - Hình nhân ghép từ khối cơ bản (chưa có model Blender có xương); ánh sáng chưa bake.
 - Dùng GodotPhysics3D thay Jolt vì Jolt trên Godot 4.4.1 bị treo khi nhiều xác vật lý (xem docs/PLAN.md).

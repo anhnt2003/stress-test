@@ -54,3 +54,64 @@ jobs:
           # lỗi engine (ví dụ gửi gói tới kết nối đã đóng), trừ cảnh báo rò tài nguyên lúc thoát của engine
           ENGINE_ERRORS="$(grep -h "ERROR:" host.log client.log | grep -v "resources still in use at exit" || true)"
           if [ -n "$ENGINE_ERRORS" ]; then echo "$ENGINE_ERRORS"; echo "::error::Có lỗi engine khi chơi qua mạng"; exit 1; fi
+
+  # Chơi online: máy chủ mai mối (signaling/) chạy trên máy CI bằng wrangler dev, chủ phòng + người vào nối WebRTC
+  # qua plugin webrtc-native (bản web dùng WebRTC của trình duyệt, cùng mã GDScript).
+  online:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      GODOT_VERSION: 4.4.1
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: signaling/package-lock.json
+
+      - name: Máy chủ mai mối - cài đặt và kiểm thử
+        working-directory: signaling
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+
+      - name: Tải Godot và plugin WebRTC cho desktop
+        run: |
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
+          rm godot.zip
+          tools/fetch_webrtc.sh
+
+      - name: Import và kiểm thử (có WebRTC)
+        run: |
+          godot --headless --path . --import 2>&1 | tee import.log
+          if grep -q "SCRIPT ERROR" import.log; then echo "::error::Có lỗi script khi import"; exit 1; fi
+          godot --headless --path . --script res://tests/run_all.gd 2>&1 | tee tests.log
+          if grep -q "SCRIPT ERROR" tests.log; then echo "::error::Có lỗi script khi chạy kiểm thử"; exit 1; fi
+
+      - name: Chơi online (mở phòng, vào bằng mã phòng, trễ giả lập 100 ms)
+        run: |
+          (cd signaling && npx wrangler dev --port 28787 --ip 127.0.0.1 > ../signal.log 2>&1 &)
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:28787/health && break; sleep 1; done
+          SIG=ws://127.0.0.1:28787/ws
+          godot --headless --path . -- --host-online --signal=$SIG --autostart=6 --seed=1 --quit-after=45 > host.log 2>&1 &
+          CODE=""
+          for i in $(seq 1 60); do
+            CODE="$(grep -o "MÃ PHÒNG: [0-9A-Z-]*" host.log | head -1 | sed 's/MÃ PHÒNG: //' || true)"
+            [ -n "$CODE" ] && break
+            sleep 0.5
+          done
+          if [ -z "$CODE" ]; then cat host.log signal.log; echo "::error::Không tạo được phòng online"; exit 1; fi
+          godot --headless --path . -- --join="$CODE" --signal=$SIG --name=ci --net-test --net-lag=100 --quit-after=35 2>&1 | tee client.log
+          wait
+          grep -q "NETTEST OK" client.log
+          if grep -q "SCRIPT ERROR" host.log client.log; then echo "::error::Có lỗi script khi chơi online"; exit 1; fi
+          ENGINE_ERRORS="$(grep -h "ERROR:" host.log client.log | grep -v "resources still in use at exit" || true)"
+          if [ -n "$ENGINE_ERRORS" ]; then echo "$ENGINE_ERRORS"; echo "::error::Có lỗi engine khi chơi online"; exit 1; fi

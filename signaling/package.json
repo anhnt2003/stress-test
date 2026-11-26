@@ -1,0 +1,15 @@
+{
+  "name": "stress-test-signal",
+  "private": true,
+  "type": "module",
+  "description": "Máy chủ mai mối (signaling) cho chơi online qua WebRTC của Stress Test",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "wrangler dev --port 28787 --ip 127.0.0.1",
+    "deploy": "wrangler deploy",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "wrangler": "4.157.0"
+  }
+}

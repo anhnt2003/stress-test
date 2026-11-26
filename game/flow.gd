@@ -16,6 +16,8 @@ const FINAL_LOCK := 3.6
 var fixed_seed := false
 ## RNG riêng để chọn seed trận (RNG chung bị seed lại khi nạp sảnh / cửa).
 var _rng := RandomNumberGenerator.new()
+## Máy chủ mai mối cho phòng online ("" = bản này không chơi online được).
+var signal_url := ""
 
 
 func setup(a: Node) -> void:
@@ -56,8 +58,13 @@ func boot(cli: Dictionary) -> void:
 	_rng.randomize()
 	net.net_lag = float(cli.net_lag) / 1000.0
 	net.autotest = bool(cli.net_test)
-	if int(cli.host) >= 0:
-		host(int(cli.host))
+	signal_url = OnlineConfig.signal_url(String(cli.signal))
+	menus.configure(not OS.has_feature("web"), signal_url != "" and OnlineLink.available(), not OS.has_feature("web"))
+	if int(cli.host) >= 0 or cli.host_online:
+		if cli.host_online:
+			host_online()
+		else:
+			host(int(cli.host))
 		if float(cli.autostart) >= 0.0 and net.is_host():   # mở phòng thất bại thì không tự chạy trận bot
 			get_tree().create_timer(float(cli.autostart)).timeout.connect(func(): if net.is_host() and m.state == MatchManager.ST_LOBBY: start_match())
 	elif String(cli.join) != "":
@@ -132,6 +139,14 @@ func toggle_pause() -> void:
 	else:
 		menus.hide_all()
 	net.notify_pause(paused)
+
+
+## Bản web: trình duyệt dừng vòng lặp của tab bị ẩn. Tạm dừng (và báo cho máy khách) trước khi điều đó xảy ra,
+## thay vì để trận đứng hình giữa chừng với cả phòng.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and OS.has_feature("web") and m != null:
+		if not paused and not net.is_client() and m.state == MatchManager.ST_PLAY:
+			toggle_pause()
 
 
 ## Trận có đang dừng thật không (máy khách mạng tạm dừng thì trận của máy chủ vẫn chạy).
@@ -225,6 +240,8 @@ func _on_main(action: String) -> void:
 			enter_lobby()
 		"Host":
 			host(NetSession.DEFAULT_PORT)
+		"HostOnline":
+			host_online()
 		"Join":
 			menus.main_menu.visible = false
 			menus.join_dialog.open(settings.last_join, settings.player_name)
@@ -280,16 +297,36 @@ func host(port: int) -> void:
 	enter_lobby()
 
 
+## Mở phòng online: mã phòng do máy chủ mai mối cấp, hiện ở sảnh khi có.
+func host_online() -> void:
+	paused = false
+	m.seats = Seats.new()
+	router.seats = m.seats
+	var err := net.host_online(signal_url, m, settings)
+	if err != OK:
+		show_menu()
+		presenter.hud.say(online_error(err), 4.0)
+		return
+	enter_lobby()
+
+
+static func online_error(err: int) -> String:
+	match err:
+		ERR_UNCONFIGURED: return "BẢN NÀY CHƯA CẤU HÌNH MÁY CHỦ ONLINE."
+		ERR_UNAVAILABLE: return "BẢN NÀY KHÔNG CÓ WEBRTC (THIẾU PLUGIN WEBRTC-NATIVE)."
+	return "KHÔNG TẠO ĐƯỢC KẾT NỐI MẠNG (LỖI %d). THỬ LẠI SAU." % err
+
+
 func join(address: String, player_name: String) -> void:
 	settings.last_join = address
 	if player_name != "":
 		settings.player_name = player_name   # --join không kèm --name thì giữ tên đã lưu
 	settings.save()
-	var err := net.join(address, settings.player_name if settings.player_name != "" else "KHÁCH", m, settings)
+	var err := net.join(address, settings.player_name if settings.player_name != "" else "KHÁCH", m, settings, signal_url)
 	if err != OK:
 		menus.join_dialog.open(address, player_name)
-		menus.join_dialog.set_status("MÃ PHÒNG / ĐỊA CHỈ KHÔNG HỢP LỆ." if err == ERR_INVALID_PARAMETER
-			else "KHÔNG TẠO ĐƯỢC KẾT NỐI MẠNG (LỖI %d). THỬ LẠI SAU." % err)
+		var bad := "MÃ PHÒNG KHÔNG HỢP LỆ (6 KÝ TỰ, VD K7Q-2MX)." if OS.has_feature("web") else "MÃ PHÒNG / ĐỊA CHỈ KHÔNG HỢP LỆ."
+		menus.join_dialog.set_status(bad if err == ERR_INVALID_PARAMETER else online_error(err))
 		return
 	menus.join_dialog.set_status("ĐANG KẾT NỐI...")
 

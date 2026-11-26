@@ -20,6 +20,19 @@ func open(last_code: String, player_name: String) -> void:
 	($Code as LineEdit).grab_focus()
 
 
+## Chữ hướng dẫn theo cách vào phòng bản này hỗ trợ (online 6 ký tự / LAN).
+func configure(lan: bool, online: bool) -> void:
+	if online and not lan:
+		($LCode as Label).text = "MÃ PHÒNG (6 KÝ TỰ)"
+		($Help as Label).text = "MÃ PHÒNG HIỆN Ở SẢNH CỦA CHỦ PHÒNG. CHỦ PHÒNG CẦN GIỮ TAB GAME MỞ TRONG LÚC CHƠI."
+	elif online:
+		($LCode as Label).text = "MÃ PHÒNG ONLINE / LAN HOẶC IP[:CỔNG]"
+		($Help as Label).text = "MÃ ONLINE (6 KÝ TỰ) VÀO ĐƯỢC TỪ MỌI MẠNG. MÃ LAN / IP CHỈ TRONG CÙNG MẠNG (HOẶC MỞ CỔNG UDP 24555)."
+	else:
+		($LCode as Label).text = "MÃ PHÒNG HOẶC IP[:CỔNG]"
+		($Help as Label).text = "MÃ PHÒNG HIỆN Ở SẢNH CỦA MÁY CHỦ. CHƠI KHÁC MẠNG CẦN MỞ CỔNG UDP 24555 HOẶC DÙNG VPN LAN (TAILSCALE, ZEROTIER)."
+
+
 func set_status(text: String) -> void:
 	($Status as Label).text = text
 

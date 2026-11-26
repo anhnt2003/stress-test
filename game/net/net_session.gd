@@ -1,10 +1,12 @@
 class_name NetSession
 extends Node
-## Chơi qua mạng (High-level Multiplayer của Godot trên ENet), mô hình host-authoritative:
+## Chơi qua mạng (High-level Multiplayer của Godot), mô hình host-authoritative. Hai đường truyền dùng chung mọi RPC:
+## - LAN: ENet (UDP), vào bằng mã phòng LAN (IP + cổng) hoặc IP. Chỉ bản desktop.
+## - Online: WebRTC qua máy chủ mai mối (OnlineLink, signaling/), vào bằng mã phòng 6 ký tự. Bản web và desktop.
 ## - Máy chủ chạy toàn bộ luật chơi. Máy khách gửi input 30 lần/giây (kênh không tin cậy, có thứ tự),
 ##   nhận ảnh chụp trạng thái 20 lần/giây và nội suy vị trí; nhân vật của chính mình được dự đoán tại chỗ.
 ## - Sự kiện chết, thả người thay thế, điểm, chuyển cửa, lời Cỗ Máy gửi bằng RPC tin cậy.
-## - Vào phòng bằng mã (RoomCode: IP + cổng) hoặc IP. Người rớt mạng thì bot ngồi thay; vào lại bằng cùng máy
+## - Người rớt mạng thì bot ngồi thay; vào lại bằng cùng máy
 ##   (token trong cài đặt) thì lấy lại ghế, kể cả giữa trận.
 ## Nút này phải nằm ở cùng đường dẫn trên mọi máy (/root/Main/Net) để RPC tìm thấy nhau.
 
@@ -51,7 +53,10 @@ var mode := ""
 var connected := false
 var m: MatchManager
 var settings: Settings
-var peer: ENetMultiplayerPeer
+## ENetMultiplayerPeer (LAN) hoặc WebRTCMultiplayerPeer (online).
+var peer: MultiplayerPeer
+## Kết nối mai mối khi chơi online (null khi chơi LAN).
+var online: OnlineLink
 var port := DEFAULT_PORT
 var room_code := ""
 var player_name := ""
@@ -102,9 +107,18 @@ func is_client() -> bool:
 	return mode == "client"
 
 
+func is_online_room() -> bool:
+	return online != null
+
+
 func room_text() -> String:
 	if not is_host():
 		return ""
+	if online:
+		if room_code == "":
+			return "ĐANG TẠO PHÒNG ONLINE..."
+		var tab := "   ·   GIỮ TAB NÀY MỞ" if OS.has_feature("web") else ""
+		return "PHÒNG ONLINE  ·  MÃ PHÒNG: %s   ·   %d NGƯỜI QUA MẠNG%s" % [OnlineLink.pretty(room_code), peers.size(), tab]
 	var ips := RoomCode.candidates()
 	var others := ""
 	if ips.size() > 1:   # máy có nhiều mạng: hiện thêm IP khác để người chơi tự thử nếu mã phòng không vào được
@@ -120,13 +134,51 @@ func host(p: int, match_: MatchManager, s: Settings) -> int:
 	m = match_
 	settings = s
 	port = p
-	peer = ENetMultiplayerPeer.new()
-	var err := peer.create_server(p, MAX_CLIENTS + EXTRA_SLOTS)
+	var enet := ENetMultiplayerPeer.new()
+	var err := enet.create_server(p, MAX_CLIENTS + EXTRA_SLOTS)
 	if err != OK:
-		peer = null
 		return err
+	peer = enet
+	_begin_host()
+	room_code = RoomCode.encode(RoomCode.local_ipv4(), p)
+	status_changed.emit("ĐÃ MỞ PHÒNG. MÃ PHÒNG: %s" % room_code)
+	return OK
+
+
+## Mở phòng online: WebRTC, mã phòng do máy chủ mai mối cấp (đến sau, qua status_changed).
+func host_online(signal_url: String, match_: MatchManager, s: Settings) -> int:
+	close()
+	if signal_url == "":
+		return ERR_UNCONFIGURED
+	if not OnlineLink.available():
+		return ERR_UNAVAILABLE
+	m = match_
+	settings = s
+	var rtc := WebRTCMultiplayerPeer.new()
+	var err := rtc.create_server(OnlineLink.CHANNELS)
+	if err != OK:
+		return err
+	peer = rtc
+	_begin_host()
+	online = OnlineLink.new()
+	online.max_peers = MAX_CLIENTS + EXTRA_SLOTS
+	add_child(online)
+	online.room_ready.connect(func(c):
+		room_code = c
+		status_changed.emit("ĐÃ MỞ PHÒNG ONLINE. MÃ PHÒNG: %s" % OnlineLink.pretty(c)))
+	online.note.connect(func(text): status_changed.emit(text))
+	online.failed.connect(_leave)
+	err = online.start_host(signal_url, rtc)
+	if err != OK:
+		close()
+		return err
+	status_changed.emit("ĐANG TẠO PHÒNG ONLINE...")
+	return OK
+
+
+func _begin_host() -> void:
 	# máy khách chỉ nói chuyện với máy chủ: tắt relay để máy chủ không tự phát thông báo vào / rời phòng
-	# cho mọi kết nối (kể cả kết nối đang đóng → ENet báo lỗi gửi gói)
+	# cho mọi kết nối (kể cả kết nối đang đóng → báo lỗi gửi gói)
 	(multiplayer as SceneMultiplayer).server_relay = false
 	multiplayer.multiplayer_peer = peer
 	mode = "host"
@@ -143,26 +195,59 @@ func host(p: int, match_: MatchManager, s: Settings) -> int:
 	_link(m.state_changed, func(st): _broadcast("s_state", [st]))
 	_link(m.round_ended, func(rows): _broadcast("s_round", [rows, m.totals, m.total_deaths]))
 	_link(m.match_ended, func(rows, best): _broadcast("s_final", [rows, best, m.totals, m.total_deaths]))
-	room_code = RoomCode.encode(RoomCode.local_ipv4(), p)
-	status_changed.emit("ĐÃ MỞ PHÒNG. MÃ PHÒNG: %s" % room_code)
-	return OK
 
 
-func join(address: String, nm: String, match_: MatchManager, s: Settings) -> int:
+## Vào phòng: mã online 6 ký tự (cần signal_url) hoặc mã phòng LAN / IP[:cổng] (chỉ bản desktop).
+func join(address: String, nm: String, match_: MatchManager, s: Settings, signal_url := "") -> int:
 	close()
+	var room := OnlineLink.normalize_code(address)
+	if room != "":
+		return _join_online(room, nm, match_, s, signal_url)
+	if OS.has_feature("web"):
+		return ERR_INVALID_PARAMETER   # trình duyệt không mở được kết nối UDP (ENet)
 	var a := RoomCode.parse_address(address, DEFAULT_PORT)
 	if a.is_empty():
 		return ERR_INVALID_PARAMETER
+	var enet := ENetMultiplayerPeer.new()
+	var err := enet.create_client(String(a.ip), int(a.port))
+	if err != OK:
+		return err
+	peer = enet
+	_begin_client(match_, s, nm)
+	(multiplayer as SceneMultiplayer).server_relay = false
+	multiplayer.multiplayer_peer = peer
+	_link(multiplayer.connection_failed, func(): _leave("KHÔNG KẾT NỐI ĐƯỢC TỚI %s:%d." % [a.ip, a.port]))
+	status_changed.emit("ĐANG KẾT NỐI TỚI %s:%d..." % [a.ip, a.port])
+	return OK
+
+
+func _join_online(room: String, nm: String, match_: MatchManager, s: Settings, signal_url: String) -> int:
+	if signal_url == "":
+		return ERR_UNCONFIGURED
+	if not OnlineLink.available():
+		return ERR_UNAVAILABLE
+	var rtc := WebRTCMultiplayerPeer.new()
+	online = OnlineLink.new()
+	add_child(online)
+	peer = rtc
+	_begin_client(match_, s, nm)
+	# id của máy này do máy chủ mai mối cấp: lúc đó mới tạo được client WebRTC và gắn vào SceneMultiplayer
+	online.client_ready.connect(func():
+		(multiplayer as SceneMultiplayer).server_relay = false
+		multiplayer.multiplayer_peer = rtc)
+	online.failed.connect(_leave)
+	var err := online.start_join(signal_url, room, rtc)
+	if err != OK:
+		close()
+		return err
+	status_changed.emit("ĐANG TÌM PHÒNG %s..." % OnlineLink.pretty(room))
+	return OK
+
+
+func _begin_client(match_: MatchManager, s: Settings, nm: String) -> void:
 	m = match_
 	settings = s
 	player_name = nm.substr(0, 16).to_upper()
-	peer = ENetMultiplayerPeer.new()
-	var err := peer.create_client(String(a.ip), int(a.port))
-	if err != OK:
-		peer = null
-		return err
-	(multiplayer as SceneMultiplayer).server_relay = false
-	multiplayer.multiplayer_peer = peer
 	mode = "client"
 	connected = false
 	my_seat = -1
@@ -181,10 +266,7 @@ func join(address: String, nm: String, match_: MatchManager, s: Settings) -> int
 	for d in 4:
 		_local.append(PadSource.new(d))
 	_link(multiplayer.connected_to_server, func(): rpc_id(1, "c_hello", player_name, s.token, PROTOCOL))
-	_link(multiplayer.connection_failed, func(): _leave("KHÔNG KẾT NỐI ĐƯỢC TỚI %s:%d." % [a.ip, a.port]))
 	_link(multiplayer.server_disconnected, func(): _leave("MÁY CHỦ ĐÃ ĐÓNG PHÒNG HOẶC MẤT KẾT NỐI."))
-	status_changed.emit("ĐANG KẾT NỐI TỚI %s:%d..." % [a.ip, a.port])
-	return OK
 
 
 func close() -> void:
@@ -193,6 +275,10 @@ func close() -> void:
 		if sig.is_connected(l[1]):
 			sig.disconnect(l[1])
 	_links.clear()
+	if online:
+		online.stop()
+		online.queue_free()
+		online = null
 	if peer:
 		peer.close()
 	peer = null
@@ -286,9 +372,31 @@ func c_hello(nm: String, token: String, protocol: String) -> void:
 ## như vậy sẽ gửi cả cho kết nối đang chờ c_hello, đang bị từ chối hoặc đang rời đi (ENet báo lỗi gửi gói).
 func _broadcast(method: String, args: Array) -> void:
 	for id in peers:
-		var pp := peer.get_peer(id) if peer else null
-		if pp and pp.get_state() == ENetPacketPeer.STATE_CONNECTED:
+		if _peer_ok(id):
 			callv("rpc_id", [id, method] + args)
+
+
+## Kết nối tới peer còn sống (không gửi cho kết nối đang đóng: ENet / WebRTC báo lỗi gửi gói).
+func _peer_ok(id: int) -> bool:
+	if peer is ENetMultiplayerPeer:
+		var pp := (peer as ENetMultiplayerPeer).get_peer(id)
+		return pp != null and pp.get_state() == ENetPacketPeer.STATE_CONNECTED
+	if peer is WebRTCMultiplayerPeer:
+		var w := peer as WebRTCMultiplayerPeer
+		if not w.has_peer(id):
+			return false
+		var info := w.get_peer(id)
+		if not bool(info.get("connected", false)):
+			return false
+		# người chơi vừa đóng tab: kết nối chưa bị coi là mất nhưng kênh dữ liệu đã đóng
+		var pc = info.get("connection")
+		if pc is WebRTCPeerConnection and (pc as WebRTCPeerConnection).get_connection_state() != WebRTCPeerConnection.STATE_CONNECTED:
+			return false
+		for ch in info.get("channels", []):
+			if ch is WebRTCDataChannel and (ch as WebRTCDataChannel).get_ready_state() != WebRTCDataChannel.STATE_OPEN:
+				return false
+		return true
+	return false
 
 
 ## Giới hạn độ dài tên / mã máy trước khi xử lý từng ký tự: một gói c_hello cỡ vài MB làm treo máy chủ.

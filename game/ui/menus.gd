@@ -24,6 +24,18 @@ func _ready() -> void:
 		add_child(c)
 
 
+## Ẩn các mục không dùng được ở bản này: phòng LAN (trình duyệt không có UDP), phòng online (thiếu máy chủ
+## mai mối / WebRTC), nút thoát (trang web không tự đóng được).
+func configure(lan: bool, online: bool, quit: bool) -> void:
+	var b := main_menu.get_node("Buttons")
+	(b.get_node("Host") as Control).visible = lan
+	(b.get_node("HostOnline") as Control).visible = online
+	(b.get_node("Join") as Control).visible = lan or online
+	(b.get_node("Quit") as Control).visible = quit
+	(b.get_node("Host") as Button).text = "TẠO PHÒNG LAN" if online else "TẠO PHÒNG QUA MẠNG"
+	join_dialog.configure(lan, online)
+
+
 ## Có menu con (cài đặt, vào phòng) đang mở: để GUI tự xử lý phím.
 func overlay_open() -> bool:
 	return settings_menu.visible or join_dialog.visible
