@@ -1,5 +1,5 @@
 extends Node3D
-## CƠ SỞ KIỂM ĐỊNH SỐ 9 — bản mẫu 5 bài thử, tông kinh dị công nghiệp
+## STRESS TEST — bản mẫu 5 bài thử, tông kinh dị công nghiệp
 ## Cảnh dựng hoàn toàn bằng code. Phím 1-5 đổi bài thử, WASD/mũi tên di chuyển đối tượng 01, SPACE nhảy, Esc thoát.
 ## Không bấm gì 3 giây thì máy tự điều khiển đối tượng 01.
 

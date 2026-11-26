@@ -1,4 +1,4 @@
-# Kế hoạch triển khai — Cơ Sở Kiểm Định Số 9
+# Kế hoạch triển khai — Stress Test
 
 Party game 3D kinh dị cho 3–4 người: 10 cửa, chấm điểm sau mỗi cửa, chốt điểm từng người cuối trận.
 Engine: Godot 4.4 (GDScript). Trạng thái hiện tại: bản mẫu một file `main.gd` (~2.800 dòng), 1 người + 3 bot.

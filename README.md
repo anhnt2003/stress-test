@@ -1,4 +1,4 @@
-# Cơ Sở Kiểm Định Số 9 — bản mẫu 10 cửa, tông kinh dị (Godot 4.4+)
+# Stress Test — bản mẫu 10 cửa, tông kinh dị (Godot 4.4+)
 
 Bản mẫu để xem chất hình, nhịp chơi và cách tính điểm. Chưa phải game hoàn chỉnh. Có cảnh máu me.
 

@@ -1,9 +1,9 @@
-; Cơ Sở Kiểm Định Số 9 — bản mẫu kinh dị (Godot 4.4+)
+; Stress Test — 3D horror party game prototype (Godot 4.4+)
 config_version=5
 
 [application]
 
-config/name="Cơ Sở Kiểm Định Số 9"
+config/name="Stress Test"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.4", "Forward Plus")
 
