@@ -49,7 +49,7 @@ jobs:
           godot --headless --path . --export-release "Windows" build/windows/StressTest.exe
           godot --headless --path . --export-release "Linux" build/linux/StressTest.x86_64
           godot --headless --path . --export-release "macOS" build/macos/StressTest.zip
-          VER="${GITHUB_REF_NAME}"
+          VER="${GITHUB_REF_NAME//\//-}"   # nhánh có dấu "/" (chạy tay) không làm hỏng tên file
           (cd build/windows && zip -q -r "../../dist/StressTest-${VER}-windows.zip" .)
           (cd build/linux && chmod +x StressTest.x86_64 && tar -czf "../../dist/StressTest-${VER}-linux.tar.gz" .)
           cp build/macos/StressTest.zip "dist/StressTest-${VER}-macos.zip"

@@ -45,11 +45,12 @@ jobs:
 
       - name: Chơi qua mạng (máy chủ + máy khách trên cùng máy, trễ giả lập 100 ms)
         run: |
-          godot --headless --path . -- --host --autostart=4 --quit-after=30 > host.log 2>&1 &
+          godot --headless --path . -- --host --autostart=4 --seed=1 --quit-after=30 > host.log 2>&1 &
           sleep 2
           godot --headless --path . -- --join=127.0.0.1 --name=ci --net-test --net-lag=100 --quit-after=25 2>&1 | tee client.log
           wait
           grep -q "NETTEST OK" client.log
           if grep -q "SCRIPT ERROR" host.log client.log; then echo "::error::Có lỗi script khi chơi qua mạng"; exit 1; fi
           # lỗi engine (ví dụ gửi gói tới kết nối đã đóng), trừ cảnh báo rò tài nguyên lúc thoát của engine
-          if grep "ERROR:" host.log client.log | grep -vq "resources still in use at exit"; then echo "::error::Có lỗi engine khi chơi qua mạng"; exit 1; fi
+          ENGINE_ERRORS="$(grep -h "ERROR:" host.log client.log | grep -v "resources still in use at exit" || true)"
+          if [ -n "$ENGINE_ERRORS" ]; then echo "$ENGINE_ERRORS"; echo "::error::Có lỗi engine khi chơi qua mạng"; exit 1; fi

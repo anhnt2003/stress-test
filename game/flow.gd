@@ -174,6 +174,8 @@ func _on_back() -> void:
 	elif m.state == MatchManager.ST_LOBBY:
 		show_menu()
 	elif m.state == MatchManager.ST_FINAL:
+		if m.state_t < FINAL_LOCK:
+			return   # bảng tổng kết chưa hiện (B cũng là nút xô)
 		if net.is_client():
 			show_menu()
 		else:
@@ -278,9 +280,10 @@ func host(port: int) -> void:
 
 func join(address: String, player_name: String) -> void:
 	settings.last_join = address
-	settings.player_name = player_name
+	if player_name != "":
+		settings.player_name = player_name   # --join không kèm --name thì giữ tên đã lưu
 	settings.save()
-	var err := net.join(address, player_name if player_name != "" else "KHÁCH", m, settings)
+	var err := net.join(address, settings.player_name if settings.player_name != "" else "KHÁCH", m, settings)
 	if err != OK:
 		menus.join_dialog.open(address, player_name)
 		menus.join_dialog.set_status("MÃ PHÒNG / ĐỊA CHỈ KHÔNG HỢP LỆ.")

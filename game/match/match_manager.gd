@@ -312,7 +312,16 @@ func _update_subject(s: Subject, dt: float) -> void:
 	if state != ST_PLAY:
 		# ngoài giờ thi: đứng yên, chỉ rơi xuống đất nếu đang lơ lửng
 		var g0 := door.ground_y(p)
-		if g0 > -1000.0 and p.y > g0:
+		if g0 <= -1000.0:
+			# hết giờ đúng lúc đang rơi qua lỗ (sàn nghiền): rơi tiếp vào máy, không treo giữa không trung
+			s.vy -= Subject.GRAVITY * dt
+			p.y += s.vy * dt
+			s.position = p
+			s.ground = false
+			s.moving = false
+			door.after_move(s)
+			return
+		if p.y > g0:
 			s.vy -= Subject.GRAVITY * dt
 			p.y = maxf(g0, p.y + s.vy * dt)
 			s.position = p

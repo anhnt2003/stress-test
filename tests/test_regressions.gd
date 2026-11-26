@@ -25,6 +25,8 @@ func run_async(t) -> void:
 	app.m._set_state(MatchManager.ST_FINAL)
 	app.flow._on_start()
 	t.check("vừa vào tổng kết: chưa cho chơi lại", app.m.state, MatchManager.ST_FINAL)
+	app.flow._on_back()
+	t.check("vừa vào tổng kết: B / Esc chưa về sảnh", app.m.state, MatchManager.ST_FINAL)
 	app.m.state_t = 5.0
 	app.flow._on_start()
 	t.check("bảng đã hiện: chơi lại được", app.m.state, MatchManager.ST_INTRO)
@@ -135,6 +137,41 @@ func run_async(t) -> void:
 	var a0: float = saw.arm_angle
 	saw.client_tick(0.05)
 	t.ok("tay cưa máy khách quay giữa hai ảnh chụp", is_equal_approx(saw.arm_angle, a0 + 0.1))
+	# Máy khách: ngoài lúc thi máy móc đứng yên như máy chủ (không rung theo ảnh chụp)
+	var net2 := NetSession.new()
+	t.root.add_child(net2)
+	net2.m = m
+	net2.mode = "client"
+	net2._apply_load(2, 0, [0, 0, 0, 0], [0, 0, 0, 0])
+	m._set_state(MatchManager.ST_INTRO)
+	m.door.arm_speed = 2.0
+	var a1: float = m.door.arm_angle
+	net2.client_step(0.1)
+	t.check("giới thiệu cửa: tay cưa máy khách đứng yên", m.door.arm_angle, a1)
+	net2.mode = ""
+	net2.queue_free()
+	m.remote = false
+	# Collider của máy ép đi theo máy ép (không nằm lại giữa sàn)
+	m.load_door(0, false)
+	for i in 4:
+		await t.physics_frame
+	var q := PhysicsPointQueryParameters3D.new()
+	q.collision_mask = DoorBase.LAYER_OBSTACLE
+	q.position = m.door.press.global_position + Vector3(0, 0.65, 0)
+	t.ok("có collider tại vị trí máy ép", m.get_world_3d().direct_space_state.intersect_point(q).size() > 0)
+	q.position = Vector3(0, 0.65, 0)
+	t.ok("không còn hộp vô hình giữa sàn", m.get_world_3d().direct_space_state.intersect_point(q).size() == 0)
+	# Hết giờ đúng lúc rơi qua lỗ ở sàn nghiền: rơi tiếp vào máy, không treo giữa không trung
+	m.load_door(6, false)
+	var tl = m.door
+	var sf: Subject = m.subjects[0]
+	var ti: int = tl.tile_at(sf.position)
+	tl.tiles[ti].state = 3
+	sf.position.y = 1.0
+	m._set_state(MatchManager.ST_RESULT)
+	for k in 30:
+		m._update_subject(sf, 1.0 / 60.0)
+	t.ok("rơi qua lỗ lúc chấm điểm: rơi vào máy nghiền", sf.out > 0.0 and sf.dead_mode == "grind")
 	net.queue_free()
 	m.queue_free()
 	await t.process_frame
@@ -165,5 +202,16 @@ func run(t) -> void:
 	ns.receive(Vector2(1, 0), [0, 0, 0], 10.0)
 	t.check("vừa nhận input: đi theo", ns.current_move(10.2), Vector2(1, 0))
 	t.check("im lặng quá lâu: đứng lại", ns.current_move(11.0), Vector2.ZERO)
+	# Máy khách: nhãn ghế của mình có dấu "← BẠN"
+	var cs := Seats.new()
+	cs.sources[1] = NetSession.RemoteSeat.new("AN  (QUA MẠNG)  ← BẠN")
+	cs.names[1] = "AN"
+	t.check("nhãn ghế máy khách giữ dấu của mình", cs.label(1), "AN  (QUA MẠNG)  ← BẠN")
+	# Gói input độc hại / hỏng bị bỏ qua
+	var bad := NetSource.new(3, "X")
+	t.ok("hướng đi INF bị bỏ", not bad.receive(Vector2(INF, 0), [0, 0, 0], 1.0) and bad.move == Vector2.ZERO)
+	t.ok("hướng đi NaN bị bỏ", not bad.receive(Vector2(NAN, 0), [0, 0, 0], 1.0) and bad.move == Vector2.ZERO)
+	t.ok("bộ đếm sai kiểu bị bỏ", not bad.receive(Vector2(1, 0), ["a", 0, 0], 1.0) and bad.move == Vector2.ZERO)
+	t.ok("bộ đếm sai độ dài bị bỏ", not bad.receive(Vector2(1, 0), [1], 1.0) and bad.move == Vector2.ZERO)
 	# Ô vào phòng: localhost kèm cổng
 	t.check("localhost:cổng", RoomCode.parse_address("localhost:9000", 24555), {"ip": "127.0.0.1", "port": 9000})

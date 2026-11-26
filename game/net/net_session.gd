@@ -612,7 +612,8 @@ func client_step(dt: float) -> void:
 				s.position = smp[0]
 				if s.pivot and s.ragdoll == null:
 					s.pivot.rotation.y = float(smp[1])
-	m.door.client_tick(dt)
+	if m.state == MatchManager.ST_PLAY:   # máy chủ chỉ chạy máy móc lúc đang thi
+		m.door.client_tick(dt)
 	m.gore.update(dt)
 	for s in m.subjects:
 		s.animate(m.t, m.door.led_alarm(s))

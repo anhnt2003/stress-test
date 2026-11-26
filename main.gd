@@ -44,6 +44,7 @@ func _ready() -> void:
 	presenter.overlay_layer.add_child(menus)
 	router = InputRouter.new()
 	router.seats = m.seats
+	router.debug_keys = router.debug_keys or cli.debug_keys
 	add_child(router)
 	net = NetSession.new()
 	net.name = "Net"

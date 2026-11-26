@@ -106,6 +106,8 @@ func cycle_look(i: int, dh: int, dc: int) -> void:
 
 
 func label(i: int) -> String:
+	if sources[i].kind() == "remote":
+		return sources[i].label()   # máy khách: nhãn do máy chủ gửi (có dấu "← BẠN")
 	if names[i] != "":
 		return "%s  (QUA MẠNG)" % names[i]
 	return sources[i].label()

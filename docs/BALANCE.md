@@ -5,20 +5,22 @@ Bot chưa phải người thật: số liệu dùng để phát hiện cửa qu�
 
 ## Kết quả sau khi chỉnh (26/11/2026)
 
+Đo lại sau khi sửa collider của máy ép / thùng hàng / quả tạ (trước đó collider nằm lại chỗ lúc tạo).
+
 ```
 BALANCE matches=32
 CỬA             chết/ng   0 chết    chênh chơi xấu
-MÁY ÉP             1.26       0%     1.94     2.06   điểm/ghế [93, 80, 83, 81]
-SÀN ĐIỆN           1.48       0%     2.16     4.00   điểm/ghế [85, 77, 85, 82]
-LƯỠI CƯA           2.72       0%     2.34     2.50   điểm/ghế [87, 86, 77, 71]
-BĂNG CHUYỀN        1.30       0%     1.28     1.53   điểm/ghế [82, 84, 90, 74]
+MÁY ÉP             1.38       3%     1.94     1.81   điểm/ghế [80, 78, 89, 96]
+SÀN ĐIỆN           1.52       0%     2.03     4.00   điểm/ghế [89, 80, 77, 82]
+LƯỠI CƯA           2.62       0%     1.84     2.41   điểm/ghế [91, 73, 82, 75]
+BĂNG CHUYỀN        1.34       0%     1.41     1.75   điểm/ghế [69, 85, 80, 96]
 SÀN CẢM ỨNG        0.00     100%     0.00     3.97   điểm/ghế [79, 81, 87, 78]
-TẠ RƠI             1.05       3%     1.84     3.59   điểm/ghế [83, 84, 83, 98]
-SÀN NGHIỀN         1.61       0%     1.78     3.44   điểm/ghế [67, 91, 84, 80]
-CON LẮC            2.52       0%     2.53     2.75   điểm/ghế [79, 78, 82, 81]
-LÕI NỔ             0.50       0%     1.12     3.31   điểm/ghế [89, 95, 83, 93]
-VÒNG LỬA           2.83       0%     2.19     2.94   điểm/ghế [67, 86, 86, 82]
-thắng theo ghế: [8, 10, 8, 6]   tổng điểm theo ghế: [811, 842, 840, 820]
+TẠ RƠI             1.01       0%     1.91     3.53   điểm/ghế [90, 86, 79, 80]
+SÀN NGHIỀN         1.65       0%     1.72     3.41   điểm/ghế [79, 89, 72, 83]
+CON LẮC            2.51       0%     2.19     2.56   điểm/ghế [81, 76, 79, 84]
+LÕI NỔ             0.50       0%     1.19     3.25   điểm/ghế [91, 87, 89, 97]
+VÒNG LỬA           2.87       0%     2.12     2.75   điểm/ghế [80, 84, 85, 71]
+thắng theo ghế: [8, 8, 9, 9]   tổng điểm theo ghế: [829, 819, 819, 842]
 ```
 
 - `chết/ng`: số lần chết trung bình mỗi người mỗi cửa. `chênh`: người chết nhiều nhất trừ người chết ít nhất.

@@ -15,13 +15,14 @@ class_name Cli
 ##   --quit-after=SEC  tự thoát sau SEC giây thời gian thực
 ##   --net-lag=MS      giả lập độ trễ mạng phía máy khách (kiểm thử nội suy)
 ##   --net-test        (máy khách) tự kiểm tra: đi sang phải 3 giây, in NETTEST OK nếu máy chủ thấy mình di chuyển
+##   --debug-keys      bật phím gỡ lỗi F1–F10 / F12 cả trong bản phát hành
 ##   --balance=N       chạy N trận bằng bot với seed khác nhau, in thống kê số lần chết từng cửa
 
 
 static func parse(args: PackedStringArray) -> Dictionary:
 	var o := {"shot": "", "phase": 0.0, "door": -1, "match": false, "lobby": false, "menu": false, "closeup": false,
 		"seed": 0, "sabotage": true, "host": -1, "join": "", "name": "", "autostart": -1.0, "quit_after": -1.0,
-		"net_lag": 0, "balance": 0, "net_test": false, "settings": false, "gore": true}
+		"net_lag": 0, "balance": 0, "net_test": false, "settings": false, "gore": true, "debug_keys": false}
 	for a in args:
 		var kv := a.split("=", true, 1)
 		var k := kv[0]
@@ -46,4 +47,5 @@ static func parse(args: PackedStringArray) -> Dictionary:
 			"--net-test": o.net_test = true
 			"--settings": o.settings = true
 			"--no-gore": o.gore = false
+			"--debug-keys": o.debug_keys = true
 	return o

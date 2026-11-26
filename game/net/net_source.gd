@@ -30,6 +30,12 @@ func label() -> String:
 
 ## Nhận một gói input. Trả về true nếu có lần bấm mới.
 func receive(mv: Vector2, c: Array, now: float) -> bool:
+	# gói từ máy khách: không tin dữ liệu (NaN / INF / sai kiểu sẽ làm hỏng mô phỏng của cả phòng)
+	if not mv.is_finite() or c.size() != 3:
+		return false
+	for v in c:
+		if typeof(v) != TYPE_INT:
+			return false
 	move = mv.limit_length(1.0)
 	last_seen = now
 	var pressed := false

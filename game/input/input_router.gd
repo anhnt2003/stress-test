@@ -18,7 +18,8 @@ signal local_action(kind: String, dev: int, action: String)
 ## "menu", "lobby", "match", "pause", "final", "overlay" (menu con đang mở, để GUI tự xử lý)
 var screen := "menu"
 var seats: Seats
-var debug_keys := true
+## Phím gỡ lỗi F1–F10 / F12: chỉ bật khi chạy từ editor / bản debug, hoặc với --debug-keys.
+var debug_keys := OS.is_debug_build()
 var _stick := {}
 
 

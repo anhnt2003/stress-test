@@ -193,6 +193,8 @@ func static_cyl(parent: Node3D, r: float, h: float, pos: Vector3, layer := LAYER
 ## Khối chuyển động theo nút cha (máy ép, thùng hàng, quả tạ): chặn đối tượng và đẩy xác.
 func moving_body(parent: Node3D, shape: Shape3D, offset := Vector3.ZERO, layer := LAYER_OBSTACLE | LAYER_FLOOR) -> AnimatableBody3D:
 	var b := AnimatableBody3D.new()
+	# sync_to_physics = true (mặc định) bỏ qua việc nút cha di chuyển: collider sẽ nằm lại chỗ lúc tạo
+	b.sync_to_physics = false
 	b.collision_layer = layer
 	b.collision_mask = 0
 	_shape_node(b, shape, offset)
