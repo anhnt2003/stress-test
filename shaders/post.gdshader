@@ -7,6 +7,7 @@ uniform float vignette = 0.8;
 uniform float grain = 0.06;
 uniform float desat = 0.6;
 uniform float flash = 0.0; // loé đỏ khi có đối tượng bị loại
+uniform vec2 grid = vec2(800.0, 450.0); // lưới điểm ảnh gốc (window/size/viewport_*)
 const float BAYER[16] = { 0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0 };
 float h(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void fragment() {
@@ -22,9 +23,12 @@ void fragment() {
 	c += vec3(0.30, 0.0, 0.0) * flash;
 	float d = distance(uv, vec2(0.5));
 	c *= 1.0 - vignette * smoothstep(0.28, 0.82, d);
-	c *= 0.94 + 0.06 * sin(FRAGCOORD.y * 3.14159);
-	c += (h(FRAGCOORD.xy + fract(TIME) * 100.0) - 0.5) * grain;
-	ivec2 ip = ivec2(FRAGCOORD.xy) % 4;
+	// sọc quét / nhiễu / dither tính trên lưới điểm ảnh gốc 800x450, không theo điểm ảnh thật của màn hình:
+	// chữ và UI được vẽ nét theo màn hình, nhưng độ "thô" của hình vẫn như nhau ở mọi độ phân giải
+	vec2 px = floor(uv * grid);
+	c *= 0.94 + 0.06 * sin((px.y + 0.5) * 3.14159);
+	c += (h(px + 0.5 + fract(TIME) * 100.0) - 0.5) * grain;
+	ivec2 ip = ivec2(px) % 4;
 	float b = (BAYER[ip.y * 4 + ip.x] / 16.0 - 0.5) * dither_strength;
 	c = floor(c * levels + 0.5 + b) / levels;
 	COLOR = vec4(clamp(c, 0.0, 1.0), 1.0);

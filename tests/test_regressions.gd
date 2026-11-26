@@ -326,3 +326,10 @@ func run(t) -> void:
 	t.check("Windows: điểm phát Wi-Fi 192.168.137.x xếp sau LAN 10.x", RoomCode.rank_candidates(ics), ["10.0.0.7", "192.168.137.1"])
 	# Ô vào phòng: localhost kèm cổng
 	t.check("localhost:cổng", RoomCode.parse_address("localhost:9000", 24555), {"ip": "127.0.0.1", "port": 9000})
+	# Chữ nét: UI vẽ theo màn hình (canvas_items), cảnh 3D giữ ~450 dòng như trước (không nhoè chữ, không nặng máy)
+	t.check("stretch canvas_items (chữ không bị phóng từ 800x450)", ProjectSettings.get_setting("display/window/stretch/mode"), "canvas_items")
+	t.check("3D ở 1600x900: một nửa", CameraFX.render_scale(Vector2(1600, 900)), 0.5)
+	t.check("3D ở cửa sổ 800x450: đủ độ phân giải", CameraFX.render_scale(Vector2(800, 450)), 1.0)
+	t.check("3D cửa sổ dọc: theo chiều ngang (có viền đen)", CameraFX.render_scale(Vector2(1600, 2000)), 0.5)
+	t.check("3D màn 4K: không dưới 0.25", CameraFX.render_scale(Vector2(3840, 2160)), 0.25)
+	t.check("3D cửa sổ thu nhỏ hết cỡ", CameraFX.render_scale(Vector2(0, 0)), 1.0)

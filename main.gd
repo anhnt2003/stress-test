@@ -140,8 +140,7 @@ func _capture() -> void:
 	for i in 24:
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw
-	var img := get_viewport().get_texture().get_image()
-	img.resize(img.get_width() * 2, img.get_height() * 2, Image.INTERPOLATE_NEAREST)
+	var img := get_viewport().get_texture().get_image()   # đã ở độ phân giải thật của cửa sổ
 	img.save_png(String(cli.shot))
 	print("saved ", cli.shot, " ", img.get_size())
 	get_tree().quit()
