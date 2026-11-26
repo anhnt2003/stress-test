@@ -10,6 +10,8 @@ const Lines := preload("res://game/machine/machine_lines.gd")
 
 var rng := RandomNumberGenerator.new()
 var tts_enabled := true
+## Âm lượng giọng đọc của hệ điều hành (0..100); TTS không đi qua bus âm thanh của Godot.
+var tts_volume := 70
 var llm_enabled := false
 var llm: LlmClient
 var audio: GameAudio
@@ -47,7 +49,7 @@ func queue_line(text: String, delay := 0.0, duration := 3.4) -> void:
 func speak(text: String) -> void:
 	if tts_enabled and _voice_id != "":
 		DisplayServer.tts_stop()
-		DisplayServer.tts_speak(text.to_lower(), _voice_id, 70, 0.55, 1.05)
+		DisplayServer.tts_speak(text.to_lower(), _voice_id, clampi(tts_volume, 0, 100), 0.55, 1.05)
 	elif tts_enabled and audio:
 		for k in mini(4, 1 + text.length() / 14):   # không có giọng: vài tiếng bíp kiểu máy
 			get_tree().create_timer(0.09 * k).timeout.connect(func(): audio.sfx("blip", -12.0, 0.8 + 0.1 * k))

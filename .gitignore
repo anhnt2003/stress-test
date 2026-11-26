@@ -1,7 +1,8 @@
 # Godot 4
 .godot/
 *.translation
-export_presets.cfg
+# Bản build xuất ra
+build/
 # OS
 .DS_Store
 Thumbs.db

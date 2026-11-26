@@ -65,6 +65,7 @@ func apply_settings() -> void:
 	presenter.set_gore(settings.gore)
 	presenter.cam.shake_scale = settings.shake
 	app.voice.tts_enabled = settings.tts
+	app.voice.tts_volume = int(100.0 * settings.voice * settings.master)
 	app.voice.llm_enabled = settings.llm and app.voice.llm.available()
 
 
@@ -142,6 +143,8 @@ func _on_start() -> void:
 
 
 func _on_back() -> void:
+	if menus.main_menu.visible:
+		return
 	if paused:
 		_on_pause_choice("Lobby")
 	elif m.state == MatchManager.ST_LOBBY:
