@@ -131,12 +131,16 @@ func announce(text: String, duration := 3.2) -> void:
 	announced.emit(text, duration)
 
 
+## Âm thanh / rung camera do luật chơi phát ra. Trên máy khách, phần hình ảnh của cửa cũng gọi các hàm này
+## nhưng bị bỏ qua: máy chủ gửi sự kiện xuống để khỏi phát hai lần.
 func play_sfx(sound: String, vol_db := 0.0, pitch := 1.0) -> void:
-	sfx_requested.emit(sound, vol_db, pitch)
+	if not remote:
+		sfx_requested.emit(sound, vol_db, pitch)
 
 
 func shake(amount: float) -> void:
-	shake_requested.emit(amount)
+	if not remote:
+		shake_requested.emit(amount)
 
 
 func subj_label(s: Subject) -> String:
@@ -152,10 +156,16 @@ func kill(s: Subject, mode: String, dir := Vector3.ZERO, count := true) -> void:
 		s.deaths += 1
 		if s.deaths == 1:
 			s.first_death = lt
+	s.doom = -1.0
+	kill_fx(s, mode, dir, pos)
+
+
+## Phần hình ảnh của một lần chết (máy chủ và máy khách cùng chạy).
+func kill_fx(s: Subject, mode: String, dir: Vector3, pos: Vector3) -> void:
+	s.out = maxf(s.out, 3.0)
 	s.dead_mode = mode
 	s.dead_t = 0.0
 	s.flat = 0.0
-	s.doom = -1.0
 	s.tag.visible = false
 	s.set_solid(false)
 	gore.death(s, mode, dir, pos)
@@ -249,26 +259,37 @@ func _try_sabotage(s: Subject) -> void:
 
 func respawn(s: Subject) -> void:
 	# đối tượng thay thế được thả xuống từ ống trên trần; xác cũ nằm lại
+	var sp := door.spawn_point()
+	_place_respawn(s, sp + Vector3(0, 4.0, 0))
+	s.pivot.rotation = Vector3(0, randf() * TAU, 0)
+	s.brain.target = sp
+	respawned.emit(s)
+
+
+## Máy khách: thả đối tượng thay thế theo vị trí máy chủ gửi xuống.
+func respawn_fx(s: Subject, pos: Vector3, yaw: float) -> void:
+	_place_respawn(s, pos)
+	s.pivot.rotation = Vector3(0, yaw, 0)
+	respawned.emit(s)
+
+
+func _place_respawn(s: Subject, pos: Vector3) -> void:
 	var corpse := s.clear_for_respawn(door.keep_corpses)
 	if corpse:
 		corpses.append(corpse)
 		if corpses.size() > 7:
 			(corpses.pop_front() as Node3D).queue_free()
-	var sp := door.spawn_point()
-	s.position = sp + Vector3(0, 4.0, 0)
+	s.position = pos
 	s.build_model()
-	s.pivot.rotation = Vector3(0, randf() * TAU, 0)
 	s.out = 0.0
 	s.knock = Vector3.ZERO
 	s.vy = 0.0
 	s.dead_mode = ""
 	s.last_tile = -1
 	s.outside_t = 0.0
-	s.brain.target = sp
 	s.ground = false
 	s.hit_cd = 1.2
 	s.set_solid(true)
-	respawned.emit(s)
 
 
 func _update_subject(s: Subject, dt: float) -> void:

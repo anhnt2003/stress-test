@@ -33,3 +33,12 @@ jobs:
           ! grep -q "SCRIPT ERROR" match.log
           grep -q "RESULT door=10" match.log
           grep -q "FINAL totals=" match.log
+
+      - name: Chơi qua mạng (máy chủ + máy khách trên cùng máy, trễ giả lập 100 ms)
+        run: |
+          godot --headless --path . -- --host --autostart=2 --quit-after=30 > host.log 2>&1 &
+          sleep 2
+          godot --headless --path . -- --join=127.0.0.1 --name=ci --net-test --net-lag=100 --quit-after=25 2>&1 | tee client.log
+          wait
+          grep -q "NETTEST OK" client.log
+          ! grep -q "SCRIPT ERROR" host.log client.log

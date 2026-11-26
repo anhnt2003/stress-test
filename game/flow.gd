@@ -41,12 +41,17 @@ func setup(a: Node) -> void:
 	m.announced.connect(func(text, _dur): a.voice.speak(text))
 	net.status_changed.connect(_on_net_status)
 	net.left.connect(_on_net_left)
+	net.remote_look.connect(change_look)
 
 
 func boot(cli: Dictionary) -> void:
 	apply_settings()
+	net.net_lag = float(cli.net_lag) / 1000.0
+	net.autotest = bool(cli.net_test)
 	if int(cli.host) >= 0:
 		host(int(cli.host))
+		if float(cli.autostart) >= 0.0:
+			get_tree().create_timer(float(cli.autostart)).timeout.connect(func(): if m.state == MatchManager.ST_LOBBY: start_match())
 	elif String(cli.join) != "":
 		join(String(cli.join), String(cli.name))
 	elif cli.lobby:
@@ -103,6 +108,7 @@ func toggle_pause() -> void:
 		menus.pause_menu.open(net.is_client())
 	else:
 		menus.hide_all()
+	net.notify_pause(paused)
 
 
 ## Trận có đang dừng thật không (máy khách mạng tạm dừng thì trận của máy chủ vẫn chạy).

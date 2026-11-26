@@ -2,13 +2,8 @@ class_name Build
 ## Tiện ích dựng hình bằng code: vật liệu, khối cơ bản, đèn, chữ 3D.
 ## Hàm tĩnh để mọi module (cửa, nhân vật, buồng thử, công cụ bake) dùng chung.
 
-static var _font: Font
-
-
 static func font() -> Font:
-	if _font == null:
-		_font = load("res://fonts/Anton-Regular.ttf")
-	return _font
+	return load("res://fonts/Anton-Regular.ttf")   # ResourceLoader đã giữ bản cache
 
 
 static func mat(color: Color, rough := 0.8, metal := 0.0, emit := 0.0) -> StandardMaterial3D:

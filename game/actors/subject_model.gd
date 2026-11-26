@@ -9,17 +9,12 @@ const COLORS := [
 ]
 const COLOR_NAMES := ["ĐỎ GẠCH", "VÀNG ĐẤT", "XANH THÉP", "XANH RÊU", "TÍM THAN", "CAM GỈ", "XANH ĐỒNG", "XÁM TRO"]
 
-static var _blood: StandardMaterial3D
-
-
 static func default_look(i: int) -> Dictionary:
 	return {"color": Palette.SUIT[i], "hat": i, "label": Palette.SUBJ[i]}
 
 
 static func blood() -> StandardMaterial3D:
-	if _blood == null:
-		_blood = Build.mat(Palette.BLOOD, 0.1)
-	return _blood
+	return Build.mat(Palette.BLOOD, 0.1)
 
 
 ## Dựng toàn bộ hình nhân dưới `pivot`. Trả về các khớp để làm hoạt ảnh.

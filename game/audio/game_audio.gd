@@ -105,3 +105,13 @@ func set_volume(bus: String, linear: float) -> void:
 	if i >= 0:
 		AudioServer.set_bus_volume_db(i, linear_to_db(maxf(linear, 0.0001)))
 		AudioServer.set_bus_mute(i, linear <= 0.001)
+
+
+func _exit_tree() -> void:
+	# dừng hết trước khi thoát để không rò AudioStreamPlayback
+	for p in players:
+		p.stop()
+	if music:
+		music.stop()
+	if hum_player:
+		hum_player.stop()
