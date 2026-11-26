@@ -2,7 +2,7 @@
 // Xem room.js cho giao thức. Chạy thử trên máy: `npm run dev` (ws://127.0.0.1:28787/ws).
 
 import { DurableObject } from "cloudflare:workers";
-import { RoomCore, normalizeCode, randomCode } from "./room.js";
+import { RoomCore, normalizeCode, randomCode, PING, PONG } from "./room.js";
 
 const MAX_CREATE_TRIES = 6;
 
@@ -56,6 +56,12 @@ function errorSocket(reason) {
 export class Room extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
+    // ping giữ kết nối của chủ phòng được trả lời ngay mà không đánh thức object (không tốn thời gian chạy)
+    try {
+      this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(PING, PONG));
+    } catch {
+      // môi trường không hỗ trợ: RoomCore.message trả lời thay
+    }
     this.core = new RoomCore({
       sockets: () => this.ctx.getWebSockets().map(wrap),
       storage: this.ctx.storage,
@@ -113,6 +119,7 @@ export class Room extends DurableObject {
 function wrap(ws) {
   return {
     raw: ws,
+    ready: () => ws.readyState,
     att: () => ws.deserializeAttachment() || {},
     setAtt: (a) => ws.serializeAttachment(a),
     send: (s) => ws.send(s),

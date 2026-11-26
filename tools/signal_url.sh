@@ -16,11 +16,21 @@ if [ -z "$URL" ] && [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${CLOUDFLARE_ACC
   fi
 fi
 if [ -z "$URL" ]; then
-  echo "Chưa có máy chủ mai mối: bản xuất ra không có phòng online." >&2
+  if [ -n "${CLOUDFLARE_API_TOKEN:-}" ]; then
+    # có token mà không tính được địa chỉ (thiếu quyền đọc subdomain, chưa chọn subdomain workers.dev...)
+    echo "::warning::Không tính được địa chỉ máy chủ mai mối từ Cloudflare: bản xuất ra không có phòng online. Kiểm tra quyền của API token hoặc đặt biến SIGNAL_URL."
+  else
+    echo "Chưa có máy chủ mai mối: bản xuất ra không có phòng online." >&2
+  fi
   exit 0
 fi
 if ! [[ "$URL" =~ ^wss?://[A-Za-z0-9._:/-]+$ ]]; then
   echo "SIGNAL_URL phải có dạng ws(s)://tên-miền[:cổng]/đường-dẫn: $URL" >&2
+  exit 1
+fi
+# trang https (GitHub Pages) không được mở ws:// (mixed content): bản web bắt buộc wss://
+if [ "${SIGNAL_REQUIRE_TLS:-}" = "1" ] && [[ "$URL" != wss://* ]]; then
+  echo "Bản web cần máy chủ mai mối wss:// (trang https không mở được ws://): $URL" >&2
   exit 1
 fi
 sed -i.bak "s|^const SIGNAL_URL := .*|const SIGNAL_URL := \"${URL}\"|" "$ROOT/game/net/online_config.gd"

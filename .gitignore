@@ -3,6 +3,8 @@
 *.translation
 # Bản build xuất ra
 build/
+# Plugin WebRTC cho desktop (37 MB thư viện, tải bằng tools/fetch_webrtc.sh; CI / Release tự tải)
+addons/webrtc_native/
 # OS
 .DS_Store
 Thumbs.db

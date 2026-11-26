@@ -13,6 +13,11 @@ const CONNECT_TIMEOUT := 10.0   # mở WebSocket tới máy chủ mai mối
 const JOIN_TIMEOUT := 25.0      # người vào: từ lúc có id tới lúc nối WebRTC xong
 const PENDING_TIMEOUT := 30.0   # chủ phòng: kết nối WebRTC chưa xong sau ngần này thì bỏ
 const DEFAULT_ICE := [{"urls": ["stun:stun.cloudflare.com:3478", "stun:stun.l.google.com:19302"]}]
+## Ping giữ kết nối mai mối: kết nối chết lặng lẽ (máy ngủ, đổi mạng, NAT hết hạn) vẫn báo OPEN, chỉ phát hiện
+## được khi không còn nhận gì. Máy chủ mai mối tự trả lời đúng chuỗi này.
+const PING := "{\"t\":\"ping\"}"
+const PING_EVERY := 20.0
+const PONG_TIMEOUT := 50.0
 
 ## Chủ phòng: máy chủ mai mối đã cấp mã phòng (cả khi nối lại sau lúc mất mạng).
 signal room_ready(code: String)
@@ -35,9 +40,11 @@ var conns := {}
 var my_id := 0
 
 var _ws: WebSocketPeer
-var _ws_state := WebSocketPeer.STATE_CLOSED
 var _t := 0.0
 var _opened_at := 0.0
+var _last_rx := 0.0
+var _ping_at := 0.0
+var _had_room := false
 var _id_at := 0.0
 var _retry_at := -1.0
 var _retry_wait := 2.0
@@ -73,6 +80,7 @@ static func reason_text(r: String, c := "") -> String:
 		"host_away": return "CHỦ PHÒNG ĐÃ ĐÓNG PHÒNG HOẶC MẤT KẾT NỐI."
 		"busy": return "PHÒNG ĐANG CÓ NHIỀU NGƯỜI VÀO CÙNG LÚC. THỬ LẠI SAU ÍT GIÂY."
 		"bad_secret": return "PHÒNG ONLINE ĐÃ BỊ THAY THẾ."
+		"timeout": return "HẾT THỜI GIAN CHỜ VÀO PHÒNG. THỬ LẠI."
 	return "MÁY CHỦ MAI MỐI TỪ CHỐI (%s)." % r
 
 
@@ -104,55 +112,86 @@ func is_connected_to_host() -> bool:
 
 func _open(full: String) -> int:
 	_ws = WebSocketPeer.new()
-	_ws_state = WebSocketPeer.STATE_CONNECTING
 	_opened_at = _t
-	var err := _ws.connect_to_url(full)
-	if err != OK:
-		_ws_state = WebSocketPeer.STATE_CLOSED
-	return err
+	_last_rx = _t
+	_ping_at = _t + PING_EVERY
+	# lỗi ngay (mạng chưa sẵn sàng...): socket ở trạng thái CLOSED, khung sau xử lý như mất kết nối
+	return _ws.connect_to_url(full)
+
+
+func _host_url() -> String:
+	if code != "" and secret != "":
+		return "%s?role=host&code=%s&secret=%s" % [url, code, secret.uri_encode()]
+	return "%s?role=host" % url
 
 
 func _process(dt: float) -> void:
 	_t += dt
 	if _ws:
-		_ws.poll()
-		var st := _ws.get_ready_state()
-		while _ws.get_available_packet_count() > 0:
-			_on_text(_ws.get_packet().get_string_from_utf8())
-		if st == WebSocketPeer.STATE_CONNECTING and _t - _opened_at > CONNECT_TIMEOUT:
-			_ws.close()
-			st = WebSocketPeer.STATE_CLOSED
-		if st == WebSocketPeer.STATE_CLOSED and _ws_state != WebSocketPeer.STATE_CLOSED:
-			_ws_state = st
-			_on_ws_closed()
-		_ws_state = st
+		var ws := _ws
+		ws.poll()
+		var st := ws.get_ready_state()
+		while _ws == ws and ws.get_available_packet_count() > 0:
+			_last_rx = _t
+			_on_text(ws.get_packet().get_string_from_utf8())
+		if _ws == ws:   # _on_text có thể đã bỏ / thay socket
+			var dead := false
+			if st == WebSocketPeer.STATE_CONNECTING and _t - _opened_at > CONNECT_TIMEOUT:
+				dead = true
+			elif st == WebSocketPeer.STATE_OPEN:
+				if _t >= _ping_at:
+					_ping_at = _t + PING_EVERY
+					ws.send_text(PING)
+				dead = _t - _last_rx > PONG_TIMEOUT
+			if dead:
+				ws.close()
+				_ws = null
+				_on_ws_closed(0, "")
+			elif st == WebSocketPeer.STATE_CLOSED:
+				_ws = null
+				_on_ws_closed(ws.get_close_code(), ws.get_close_reason())
 	if _retry_at >= 0.0 and _t >= _retry_at:
 		_retry_at = -1.0
-		_open("%s?role=host&code=%s&secret=%s" % [url, code, secret.uri_encode()])
+		_open(_host_url())
 	_check_peers()
 
 
-func _on_ws_closed() -> void:
+func _on_ws_closed(close_code: int, close_reason: String) -> void:
 	if _done or _failed:
 		return
 	# máy chủ mai mối báo lỗi rồi đóng ngay: gói lỗi có thể không kịp đọc, lý do nằm trong mã đóng 4001
-	if _ws.get_close_code() == 4001 and _ws.get_close_reason() != "":
-		if role == "host" and code != "":
-			note.emit(reason_text(_ws.get_close_reason(), code))   # mất phòng (hết hạn...): người đã vào chơi tiếp
-			_done = true
-		else:
-			_fail(reason_text(_ws.get_close_reason(), code))
-		return
-	if role == "join":
+	if close_code == 4001 and close_reason != "":
+		_on_error(close_reason)
+	elif role == "join":
 		if not is_connected_to_host():
 			_fail("KHÔNG KẾT NỐI ĐƯỢC MÁY CHỦ MAI MỐI.")
-	elif code == "":
+	elif not _had_room:
 		_fail("KHÔNG KẾT NỐI ĐƯỢC MÁY CHỦ MAI MỐI. KIỂM TRA MẠNG RỒI THỬ LẠI.")
 	else:
 		# trận vẫn chạy với người đã vào; chỉ người mới tạm thời chưa vào được
 		note.emit("MẤT KẾT NỐI MÁY CHỦ MAI MỐI, ĐANG NỐI LẠI...")
-		_retry_at = _t + _retry_wait
-		_retry_wait = minf(_retry_wait * 2.0, 30.0)
+		_schedule_retry()
+
+
+## Lỗi từ máy chủ mai mối (gói "error" hoặc mã đóng 4001).
+func _on_error(r: String) -> void:
+	if role == "host" and _had_room:
+		if r == "no_room" or r == "bad_secret":
+			# phòng đã hết hạn (mất mạng quá lâu) hoặc bị thay: mở phòng mới, người đã vào chơi tiếp, mã mới hiện ở sảnh
+			code = ""
+			secret = ""
+			note.emit("PHÒNG ONLINE CŨ ĐÃ HẾT HẠN, ĐANG MỞ PHÒNG MỚI...")
+			_schedule_retry(0.5)
+		else:
+			note.emit(reason_text(r, code))
+			_schedule_retry()
+		return
+	_fail(reason_text(r, code))
+
+
+func _schedule_retry(delay := -1.0) -> void:
+	_retry_at = _t + (delay if delay >= 0.0 else _retry_wait)
+	_retry_wait = minf(_retry_wait * 2.0, 30.0)
 
 
 func _fail(reason: String) -> void:
@@ -181,6 +220,7 @@ func _on_text(s: String) -> void:
 			code = String(msg.get("code", ""))
 			secret = String(msg.get("secret", ""))
 			_set_ice(msg.get("ice"))
+			_had_room = true
 			_retry_wait = 2.0
 			room_ready.emit(code)
 		"id":
@@ -214,13 +254,15 @@ func _on_text(s: String) -> void:
 		"bye":
 			if role == "join" and from == 1:
 				_fail(String(msg.get("r", "CHỦ PHÒNG TỪ CHỐI.")).substr(0, 120))
+		"pong":
+			pass   # chỉ để cập nhật _last_rx
 		"error":
-			var r := String(msg.get("r", ""))
-			if role == "host" and code != "":
-				note.emit(reason_text(r, code))   # mất phòng: người đã vào vẫn chơi tiếp
-				_done = true
-			else:
-				_fail(reason_text(r, code))
+			# xử lý ở đây rồi bỏ socket, để khung đóng 4001 theo sau không bị xử lý lần nữa
+			var dead := _ws
+			_ws = null
+			if dead:
+				dead.close()
+			_on_error(String(msg.get("r", "")))
 
 
 func _set_ice(v) -> void:
@@ -270,6 +312,9 @@ func _drop_pending(id: int) -> void:
 		return
 	if rtc.has_peer(id) and bool(rtc.get_peer(id).get("connected", false)):
 		return   # người đó đóng WebSocket sau khi đã nối WebRTC xong: bình thường
+	var st := (conns[id].pc as WebRTCPeerConnection).get_connection_state()
+	if st == WebRTCPeerConnection.STATE_CONNECTING or st == WebRTCPeerConnection.STATE_CONNECTED:
+		return   # phía người vào nối xong trước (và đóng WebSocket) khi phía này chưa kịp thấy: chờ, hết hạn thì bỏ
 	conns.erase(id)
 	if rtc.has_peer(id):
 		rtc.remove_peer(id)
@@ -283,7 +328,8 @@ func _check_peers() -> void:
 			return
 		if is_connected_to_host():
 			_done = true
-			_ws.close(1000, "connected")   # không cần máy chủ mai mối nữa
+			if _ws:
+				_ws.close(1000, "connected")   # không cần máy chủ mai mối nữa
 			return
 		var pc: WebRTCPeerConnection = conns[1].pc if conns.has(1) else null
 		if (pc and pc.get_connection_state() == WebRTCPeerConnection.STATE_FAILED) or _t - _id_at > JOIN_TIMEOUT:

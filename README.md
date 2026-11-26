@@ -124,10 +124,14 @@ bản bản web (Godot, không dùng luồng nên không cần header COOP/COEP)
    `CLOUDFLARE_ACCOUNT_ID`. Chạy lại workflow **Deploy** (Actions → Deploy → Run workflow).
 
 Thiếu bước 2–4 thì bản web vẫn lên Pages và chơi một máy được, chỉ ẩn mục phòng online. Máy chủ mai mối dùng tên
-miền riêng thì đặt biến `SIGNAL_URL` (vd `wss://signal.example.com/ws`). Mặc định chỉ dùng STUN miễn phí; khoảng
-một phần nhỏ mạng (4G, mạng công ty) chặn kết nối trực tiếp và cần TURN: đặt `TURN_URLS`, `TURN_USERNAME`,
-`TURN_CREDENTIAL` cho Worker (`npx wrangler secret put ...` trong `signaling/`) bằng tài khoản của một dịch vụ TURN.
-Gói miễn phí của Cloudflare Workers / Durable Objects giới hạn 100.000 yêu cầu mỗi ngày, dư cho chơi với bạn bè.
+miền riêng thì đặt biến `SIGNAL_URL` (vd `wss://signal.example.com/ws`). Mặc định chỉ dùng STUN miễn phí; một
+phần nhỏ mạng (4G, mạng công ty) chặn kết nối trực tiếp và cần TURN: đặt `TURN_URLS` (vd
+`turn:turn.example.com:3478,turns:turn.example.com:443`) và `TURN_SECRET` cho Worker (`npx wrangler secret put ...`
+trong `signaling/`). Worker cấp mật khẩu TURN tạm thời 4 giờ theo chuẩn TURN REST API (coturn `use-auth-secret`),
+không gửi bí mật dài hạn cho người chơi; nhưng ai mở được game cũng xin được mật khẩu tạm, nên hãy đặt hạn mức
+băng thông ở phía máy chủ TURN.
+Gói miễn phí của Cloudflare Workers / Durable Objects giới hạn 100.000 yêu cầu mỗi ngày, dư cho chơi với bạn bè;
+máy chủ mai mối chưa giới hạn số phòng tạo theo IP, nên một người cố tình spam có thể dùng hết hạn mức trong ngày.
 
 ## Giới hạn hiện tại
 - Chưa chơi thử với người thật: điều khiển, cảm giác đẩy nhau, độ khó mới đo bằng bot (docs/BALANCE.md).

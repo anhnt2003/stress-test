@@ -11,5 +11,6 @@ class_name = "Room"
 tag = "v1"
 new_sqlite_classes = ["Room"]
 
-# TURN (tuỳ chọn, cho mạng chặn kết nối trực tiếp): đặt TURN_URLS (vd "turn:a.example:3478,turns:a.example:443"),
-# TURN_USERNAME, TURN_CREDENTIAL bằng `wrangler secret put` hoặc trong trang quản lý Worker.
+# TURN (tuỳ chọn, cho mạng chặn kết nối trực tiếp): đặt TURN_URLS (vd "turn:a.example:3478,turns:a.example:443")
+# và TURN_SECRET (bí mật dùng chung với máy chủ TURN, chuẩn TURN REST API / coturn use-auth-secret) bằng
+# `wrangler secret put`. Người chơi chỉ nhận mật khẩu tạm thời 4 giờ.

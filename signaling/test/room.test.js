@@ -1,7 +1,8 @@
 // Kiểm thử logic phòng mai mối (không cần Cloudflare): node --test test/
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { RoomCore, normalizeCode, randomCode, iceServers, MAX_JOINERS, JOIN_MSG_LIMIT, ROOM_TTL_MS } from "../src/room.js";
+import { createHmac } from "node:crypto";
+import { RoomCore, normalizeCode, randomCode, iceServers, MAX_JOINERS, JOIN_MSG_LIMIT, ROOM_TTL_MS, JOIN_IDLE_MS, TURN_TTL_S, PING } from "../src/room.js";
 
 function fakeRoom(env = {}) {
   const open = [];
@@ -15,12 +16,15 @@ function fakeRoom(env = {}) {
     deleteAll: async () => void data.clear(),
     setAlarm: async (t) => void (alarmAt = t),
   };
-  const core = new RoomCore({ sockets: () => open.filter((s) => !s.closed), storage, env, now: () => clock });
+  // như Cloudflare: socket đang đóng dở vẫn được liệt kê, chỉ ready() báo không còn OPEN
+  const core = new RoomCore({ sockets: () => open.filter((s) => !s.gone), storage, env, now: () => clock });
   const sock = () => {
     const s = {
       sent: [],
       closed: false,
+      gone: false,
       a: {},
+      ready: () => (s.closed ? 2 : 1),
       att: () => s.a,
       setAtt: (v) => (s.a = v),
       send: (m) => s.sent.push(JSON.parse(m)),
@@ -51,11 +55,16 @@ test("mã phòng: chuẩn hoá chữ dễ nhầm, bỏ gạch, từ chối sai �
   }
 });
 
-test("ICE: STUN miễn phí, TURN chỉ khi cấu hình đủ", () => {
-  assert.equal(iceServers({}).length, 1);
-  assert.equal(iceServers({ TURN_URLS: "turn:t.example:3478" }).length, 1, "thiếu username/credential");
-  const s = iceServers({ TURN_URLS: "turn:t.example:3478, turns:t.example:443, http://x", TURN_USERNAME: "u", TURN_CREDENTIAL: "p" });
-  assert.deepEqual(s[1], { urls: ["turn:t.example:3478", "turns:t.example:443"], username: "u", credential: "p" });
+test("ICE: STUN miễn phí; TURN chỉ khi cấu hình đủ, mật khẩu tạm thời (không lộ bí mật)", async () => {
+  assert.equal((await iceServers({})).length, 1);
+  assert.equal((await iceServers({ TURN_URLS: "turn:t.example:3478" })).length, 1, "thiếu TURN_SECRET");
+  const now = 1_800_000_000_000;
+  const s = await iceServers({ TURN_URLS: "turn:t.example:3478, turns:t.example:443, http://x", TURN_SECRET: "bí-mật" }, now);
+  const user = `${now / 1000 + TURN_TTL_S}:stress-test`;
+  assert.deepEqual(s[1].urls, ["turn:t.example:3478", "turns:t.example:443"]);
+  assert.equal(s[1].username, user);
+  assert.equal(s[1].credential, createHmac("sha1", "bí-mật").update(user).digest("base64"));
+  assert.ok(!JSON.stringify(s).includes("bí-mật"));
 });
 
 test("tạo phòng, người vào nhận id, chủ phòng được báo, trao đổi offer / answer / ICE", async () => {
@@ -182,4 +191,47 @@ test("người vào gửi quá nhiều gói thì bị ngắt", async () => {
   for (let i = 0; i <= JOIN_MSG_LIMIT; i++) r.core.message(j, JSON.stringify({ t: "cand", to: 1, c: "x" }));
   assert.equal(j.closed, true);
   assert.equal(j.last().r, "rate");
+});
+
+test("chủ phòng nối lại khi socket cũ còn treo: người vào mới được chuyển tới socket mới", async () => {
+  const r = fakeRoom();
+  const h = r.sock();
+  await r.core.createHost(h, "HHHHHH");
+  const secret = h.last().secret;
+  const h2 = r.sock(); // socket cũ chưa đóng (mạng đổi, máy chủ chưa thấy)
+  assert.equal(await r.core.reclaimHost(h2, "HHHHHH", secret), true);
+  assert.equal(h.closed, true, "socket cũ bị đóng");
+  const j = r.sock();
+  assert.equal(await r.core.join(j), true);
+  assert.deepEqual(h2.last(), { t: "peer", id: j.a.id }, "báo cho socket mới");
+  r.core.message(j, JSON.stringify({ t: "answer", to: 1, sdp: "x" }));
+  assert.equal(h2.last().t, "answer");
+  await r.core.closed(h); // socket cũ đóng hẳn sau đó: không làm hỏng phòng
+  assert.equal(j.closed, false);
+});
+
+test("ping được trả pong, không tính là gói chuyển tiếp", async () => {
+  const r = fakeRoom();
+  const h = r.sock();
+  await r.core.createHost(h, "IIIII1");
+  r.core.message(h, PING);
+  assert.deepEqual(h.last(), { t: "pong" });
+});
+
+test("người vào treo quá lâu bị đóng, nhường chỗ cho người mới", async () => {
+  const r = fakeRoom();
+  const h = r.sock();
+  await r.core.createHost(h, "JJJJJJ");
+  const parked = [];
+  for (let i = 0; i < MAX_JOINERS; i++) {
+    const j = r.sock();
+    await r.core.join(j);
+    parked.push(j);
+  }
+  const early = r.sock();
+  assert.equal(await r.core.join(early), false, "đầy");
+  r.tick(JOIN_IDLE_MS + 1);
+  const late = r.sock();
+  assert.equal(await r.core.join(late), true, "chỗ treo được giải phóng");
+  assert.ok(parked.every((j) => j.closed && j.last().r === "timeout"));
 });

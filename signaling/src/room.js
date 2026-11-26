@@ -18,6 +18,10 @@ export const MAX_MSG_BYTES = 65536;
 export const JOIN_MSG_LIMIT = 400; // người vào chỉ cần vài chục gói (offer/answer/ICE)
 export const HOST_MSG_LIMIT = 200000;
 export const ROOM_TTL_MS = 10 * 60 * 1000; // chủ phòng mất kết nối quá 10 phút thì xoá phòng
+export const JOIN_IDLE_MS = 60 * 1000; // người vào mai mối quá 60 giây (kết nối treo) thì bị đóng
+export const TURN_TTL_S = 4 * 3600; // mật khẩu TURN tạm thời hết hạn sau 4 giờ
+export const PING = '{"t":"ping"}';
+export const PONG = '{"t":"pong"}';
 export const RELAY_TYPES = new Set(["offer", "answer", "cand", "bye"]);
 
 // Hai bản bọc có thể cùng trỏ tới một WebSocket thật (Durable Object bọc lại mỗi lần lấy danh sách).
@@ -54,19 +58,32 @@ export function normalizeCode(text) {
 }
 
 // Danh sách máy chủ ICE gửi cho game: STUN miễn phí, cộng TURN nếu đã cấu hình (biến môi trường của Worker).
-export function iceServers(env = {}) {
+// TURN dùng mật khẩu tạm thời theo chuẩn "TURN REST API" (coturn use-auth-secret): tên = "<hết hạn>:stress-test",
+// mật khẩu = base64(HMAC-SHA1(TURN_SECRET, tên)). Không bao giờ gửi bí mật dài hạn cho người chơi.
+export async function iceServers(env = {}, nowMs = Date.now()) {
   const list = [{ urls: ["stun:stun.cloudflare.com:3478", "stun:stun.l.google.com:19302"] }];
   const urls = String(env.TURN_URLS || "")
     .split(",")
     .map((u) => u.trim())
     .filter((u) => /^turns?:/.test(u));
-  if (urls.length > 0 && env.TURN_USERNAME && env.TURN_CREDENTIAL) {
-    list.push({ urls, username: String(env.TURN_USERNAME), credential: String(env.TURN_CREDENTIAL) });
+  if (urls.length > 0 && env.TURN_SECRET) {
+    const username = `${Math.floor(nowMs / 1000) + TURN_TTL_S}:stress-test`;
+    list.push({ urls, username, credential: await hmacSha1Base64(String(env.TURN_SECRET), username) });
   }
   return list;
 }
 
-// Một phòng. `sockets()` trả về các WebSocket đang mở (mỗi cái có attachment {role, id, n}),
+export async function hmacSha1Base64(secret, text) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
+  const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(text)));
+  let bin = "";
+  for (const b of sig) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+
+// Một phòng. `sockets()` trả về các WebSocket của phòng (mỗi cái có attachment {role, id, n, at}; có thể gồm cả
+// socket đang đóng dở: Cloudflare vẫn liệt kê tới khi phía kia trả lời khung đóng, nên chỉ dùng socket OPEN),
 // `storage` có get/put/delete/deleteAll/setAlarm (Durable Object storage hoặc bản giả trong kiểm thử).
 export class RoomCore {
   constructor({ sockets, storage, env = {}, now = () => Date.now(), rand = cryptoRandom }) {
@@ -77,16 +94,20 @@ export class RoomCore {
     this.rand = rand;
   }
 
+  live() {
+    return this.sockets().filter((ws) => (ws.ready ? ws.ready() === 1 : true) && ws.att().role !== "old");
+  }
+
   host() {
-    return this.sockets().find((ws) => ws.att().role === "host") || null;
+    return this.live().find((ws) => ws.att().role === "host") || null;
   }
 
   joiners() {
-    return this.sockets().filter((ws) => ws.att().role === "join");
+    return this.live().filter((ws) => ws.att().role === "join");
   }
 
   find(id) {
-    return this.sockets().find((ws) => ws.att().id === id) || null;
+    return this.live().find((ws) => ws.att().id === id) || null;
   }
 
   // Phòng mới: trả về false nếu mã đã có người dùng (Worker sẽ thử mã khác).
@@ -96,8 +117,8 @@ export class RoomCore {
     await this.storage.put("secret", secret);
     await this.storage.put("code", code);
     await this.storage.delete("gone_at");
-    ws.setAtt({ role: "host", id: 1, n: 0 });
-    send(ws, { t: "room", code, secret, ice: iceServers(this.env) });
+    ws.setAtt({ role: "host", id: 1, n: 0, at: this.now() });
+    send(ws, { t: "room", code, secret, ice: await iceServers(this.env, this.now()) });
     return true;
   }
 
@@ -106,11 +127,15 @@ export class RoomCore {
     const saved = await this.storage.get("secret");
     if (!saved || saved !== secret) return fail(ws, saved ? "bad_secret" : "no_room");
     for (const old of this.sockets()) {
-      if (!same(old, ws) && old.att().role === "host") old.close(4000, "replaced");
+      if (!same(old, ws) && old.att().role === "host") {
+        // socket cũ (mạng đổi, kết nối treo) có thể còn được liệt kê một lúc: đánh dấu để không chuyển gói tới nó
+        old.setAtt({ ...old.att(), role: "old", id: 0 });
+        old.close(4000, "replaced");
+      }
     }
     await this.storage.delete("gone_at");
-    ws.setAtt({ role: "host", id: 1, n: 0 });
-    send(ws, { t: "room", code, secret, ice: iceServers(this.env) });
+    ws.setAtt({ role: "host", id: 1, n: 0, at: this.now() });
+    send(ws, { t: "room", code, secret, ice: await iceServers(this.env, this.now()) });
     return true;
   }
 
@@ -118,18 +143,23 @@ export class RoomCore {
     if (!(await this.storage.get("secret"))) return fail(ws, "no_room");
     const host = this.host();
     if (!host) return fail(ws, "host_away");
-    if (this.joiners().length >= MAX_JOINERS) return fail(ws, "busy");
+    // người mai mối quá lâu (kết nối treo, cố tình chiếm chỗ) bị đóng trước khi đếm chỗ
+    for (const j of this.joiners()) {
+      if (!same(j, ws) && this.now() - (j.att().at || 0) > JOIN_IDLE_MS) fail(j, "timeout");
+    }
+    if (this.joiners().filter((j) => !same(j, ws)).length >= MAX_JOINERS) return fail(ws, "busy");
     let id = 0;
     while (id < 2 || this.find(id)) id = 2 + this.rand(0x7ffffff0);
-    ws.setAtt({ role: "join", id, n: 0 });
-    send(ws, { t: "id", id, ice: iceServers(this.env) });
+    ws.setAtt({ role: "join", id, n: 0, at: this.now() });
+    send(ws, { t: "id", id, ice: await iceServers(this.env, this.now()) });
     send(host, { t: "peer", id });
     return true;
   }
 
   message(ws, data) {
     const att = ws.att();
-    if (!att.role) return;
+    if (!att.role || att.role === "old") return;
+    if (data === PING) return send(ws, { t: "pong" }); // dự phòng khi chưa đặt tự trả lời ping
     if (typeof data !== "string" || data.length > MAX_MSG_BYTES) return fail(ws, "bad");
     att.n = (att.n || 0) + 1;
     ws.setAtt(att);
@@ -154,6 +184,7 @@ export class RoomCore {
 
   async closed(ws) {
     const att = ws.att();
+    if (att.role === "old") return;
     if (att.role === "join") {
       const host = this.host();
       if (host) send(host, { t: "gone", id: att.id });

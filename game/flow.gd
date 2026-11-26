@@ -145,8 +145,8 @@ func toggle_pause() -> void:
 ## thay vì để trận đứng hình giữa chừng với cả phòng.
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and OS.has_feature("web") and m != null:
-		if not paused and not net.is_client() and m.state == MatchManager.ST_PLAY:
-			toggle_pause()
+		if not paused and not net.is_client():
+			toggle_pause()   # mọi lúc trừ sảnh / menu (toggle_pause tự bỏ qua): cả giới thiệu cửa, chấm điểm, tổng kết
 
 
 ## Trận có đang dừng thật không (máy khách mạng tạm dừng thì trận của máy chủ vẫn chạy).
