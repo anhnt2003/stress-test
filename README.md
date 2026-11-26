@@ -8,10 +8,18 @@ Bản mẫu để xem chất hình, nhịp chơi và cách tính điểm. Chưa 
 3. Bấm F5 để chạy.
 
 ## Điều khiển
-- WASD / mũi tên: di chuyển đối tượng 01 — SPACE: nhảy — Esc: thoát
-- N: kết thúc cửa hiện tại ngay (để xem nhanh) — phím 1–9 và 0: nhảy tới cửa 1–10
-- ENTER ở màn tổng kết: chơi lại từ cửa 1
-- Không bấm gì 3 giây thì máy tự điều khiển đối tượng 01.
+Tối đa 4 người trên một máy; ghế trống do bot ngồi.
+
+| Thiết bị | Di chuyển | Nhảy | Đẩy |
+|---|---|---|---|
+| Bàn phím 1 | WASD | Space | F |
+| Bàn phím 2 | Phím mũi tên | Dấu chấm `.` | Dấu `/` |
+| Tay cầm (1–4) | Cần trái / D-pad | A | X hoặc B |
+
+- Ở sảnh: bấm nút nhảy để vào ghế, bấm lần nữa để rời. Enter / Start để bắt đầu.
+- Trong trận: Esc / Start tạm dừng, Q (khi tạm dừng) về sảnh.
+- Đẩy: xô người đứng trước mặt văng ra khoảng 2 mét, hồi chiêu 1,3 giây.
+- Phím gỡ lỗi: F1–F10 nhảy tới cửa 1–10, F12 kết thúc cửa hiện tại.
 
 ## Một trận
 10 cửa nối tiếp nhau, mỗi cửa 30 giây. Chết thì đối tượng thay thế được thả xuống, nhưng bị tính một lần chết.
@@ -34,15 +42,21 @@ Bản mẫu để xem chất hình, nhịp chơi và cách tính điểm. Chưa 
   Riêng cửa Sàn cảm ứng xếp theo số ô chiếm được.
 - Hạng 1 / 2 / 3 / 4 được +4 / +3 / +2 / +1 điểm. Đồng hạng thì cùng điểm.
 - Hết 10 cửa: chốt tổng điểm. Bằng điểm thì ai chết ít hơn xếp trên. Hạng 1 "được giữ lại", những người còn lại bị "loại bỏ".
-- Đổi cách cho điểm: sửa `POINTS`, `ROUND_TIME`, `ORDER` ở đầu `main.gd`, và hàm `_end_round()`.
+- Luật tính điểm nằm trong `scoring.gd` (có kiểm thử ở `tests/test_scoring.gd`). Thời lượng và thứ tự cửa: `ROUND_TIME`, `ORDER` ở đầu `main.gd`.
 
 ## Cấu trúc
-- `main.gd` — toàn bộ cảnh, nhân vật, 10 cửa, bot, trận đấu và tính điểm, hệ máu/mảnh vụn, HUD.
+- `main.gd` — cảnh, nhân vật, 10 cửa, bot, trận đấu, sảnh, điều khiển, hệ máu/mảnh vụn, HUD.
   Cảnh dựng bằng code nên mở editor sẽ thấy scene trống.
+- `scoring.gd` — luật xếp hạng và cho điểm, hàm thuần.
+- `tests/test_scoring.gd` — kiểm thử tính điểm: `godot --headless --path . --script res://tests/test_scoring.gd`
+- `audio/` — hiệu ứng âm thanh, sinh bằng `tools/gen_sfx.py` (tổng hợp số, không dùng sample ngoài).
 - `shaders/` — tường bê tông, sàn bẩn, bề mặt gỉ kiểu texture độ phân giải thấp, sọc cảnh báo, hậu kỳ.
 - `fonts/Anton-Regular.ttf` — font Anton (giấy phép OFL).
+- `.github/workflows/ci.yml` — kiểm tra cú pháp, chạy kiểm thử, chạy thử cả trận 10 cửa bằng bot.
+- `docs/PLAN.md` — kế hoạch và tiến độ.
 
 ## Giới hạn hiện tại
-- Chỉ đối tượng 01 do người điều khiển, 3 đối tượng còn lại là bot đơn giản; chưa có chơi mạng hay nhiều tay cầm.
-- Va chạm tự viết đơn giản, chưa dùng physics engine. Chưa có âm thanh.
-- Model đều là khối cơ bản ghép lại.
+- Chưa có chơi qua mạng.
+- Va chạm tự viết đơn giản, chưa dùng physics engine, chưa có ragdoll.
+- Âm thanh là âm tổng hợp cơ bản, chưa có nhạc nền. Model là khối cơ bản ghép lại.
+- `main.gd` vẫn là một file lớn; việc tách thành module chưa làm xong.

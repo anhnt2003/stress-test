@@ -33,11 +33,11 @@ const LEVEL_RULES := [
 # thứ tự 10 cửa trong một trận
 const ORDER := [0, 6, 2, 5, 4, 8, 1, 7, 3, 9]
 const ROUND_TIME := 30.0
-const POINTS := [4, 3, 2, 1]   # điểm theo hạng trong mỗi cửa; ít lần chết hơn thì hạng cao hơn
 const ST_INTRO := 0
 const ST_PLAY := 1
 const ST_RESULT := 2
 const ST_FINAL := 3
+const ST_LOBBY := 4
 const BELT_L := 9.0
 const BELT_W := 4.6
 const BELT_TOP := 0.6
@@ -71,8 +71,19 @@ var level := 0
 var frozen := false
 var shot_path := ""
 var warmup := 0.0
-var idle_time := 99.0
-var jump_req := false
+var paused := false
+var muted := false
+# ghế ngồi: mỗi ghế là bàn phím 1, bàn phím 2, một tay cầm, hoặc bot
+var seats: Array = [{"kind": "bot", "dev": 0}, {"kind": "bot", "dev": 0}, {"kind": "bot", "dev": 0}, {"kind": "bot", "dev": 0}]
+var jump_reqs := [false, false, false, false]
+var shove_reqs := [false, false, false, false]
+var cam_yaw := 0.0
+var sounds := {}
+var players: Array[AudioStreamPlayer] = []
+var next_player := 0
+var lobby_rows: Array[Label] = []
+var lobby_panel: Panel
+var pause_label: Label
 var reload_req := false
 var door := 0
 var state := ST_PLAY
@@ -212,11 +223,18 @@ func _ready() -> void:
 	add_child(cam)
 	cam.current = true
 	_build_post_and_ui()
+	cam_yaw = atan2(5.2 - (-0.6), 5.7 - (-0.5))   # hướng nhìn ngang của camera góc phòng
 	if shot_path == "":
-		start_match()
+		_build_audio()
+		load_lobby()
 	else:
+		muted = true
 		# chế độ chụp ảnh: --door=N vào thẳng cửa N, --match chạy cả trận từ cửa 1
-		if OS.get_cmdline_user_args().has("--match"):
+		if OS.get_cmdline_user_args().has("--lobby"):
+			load_lobby()
+			seats[0] = {"kind": "kb1", "dev": 0}
+			seats[2] = {"kind": "pad", "dev": 0}
+		elif OS.get_cmdline_user_args().has("--match"):
 			start_match()
 		else:
 			load_door(door, false)
@@ -244,24 +262,58 @@ func _ready() -> void:
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo:
 		var k: int = e.keycode
-		if k >= KEY_1 and k <= KEY_9:
-			load_door(k - KEY_1, true)       # nhảy thẳng tới một cửa (để xem thử), điểm giữ nguyên
-		elif k == KEY_0:
-			load_door(9, true)
-		elif k == KEY_N and state == ST_PLAY:
-			lt = ROUND_TIME                   # kết thúc cửa hiện tại ngay
-		elif (k == KEY_ENTER or k == KEY_KP_ENTER) and state == ST_FINAL:
-			start_match()
-		elif k == KEY_SPACE:
-			jump_req = true
-			idle_time = 0.0
-		elif k == KEY_ESCAPE:
-			get_tree().quit()
+		if k == KEY_ESCAPE:
+			_press_pause()
+		elif paused:
+			if k == KEY_Q:
+				paused = false
+				load_lobby()
+		elif state == ST_LOBBY:
+			match k:
+				KEY_SPACE: _toggle_seat("kb1", 0)
+				KEY_PERIOD: _toggle_seat("kb2", 0)
+				KEY_ENTER, KEY_KP_ENTER: start_match()
+		elif state == ST_FINAL and (k == KEY_ENTER or k == KEY_KP_ENTER):
+			load_lobby()
+		else:
+			match k:
+				KEY_SPACE: _seat_action("kb1", 0, "jump")
+				KEY_F: _seat_action("kb1", 0, "shove")
+				KEY_PERIOD: _seat_action("kb2", 0, "jump")
+				KEY_SLASH: _seat_action("kb2", 0, "shove")
+				KEY_F12:
+					if state == ST_PLAY:
+						lt = ROUND_TIME            # phím gỡ lỗi: kết thúc cửa ngay
+			if k >= KEY_F1 and k <= KEY_F10:
+				load_door(k - KEY_F1, true)        # phím gỡ lỗi: nhảy tới một cửa
+	elif e is InputEventJoypadButton and e.pressed:
+		var dev: int = e.device
+		var btn: int = e.button_index
+		if btn == JOY_BUTTON_START:
+			if state == ST_LOBBY:
+				start_match()
+			elif state == ST_FINAL:
+				load_lobby()
+			else:
+				_press_pause()
+		elif paused:
+			pass
+		elif state == ST_LOBBY:
+			if btn == JOY_BUTTON_A:
+				_toggle_seat("pad", dev)
+		elif btn == JOY_BUTTON_A:
+			_seat_action("pad", dev, "jump")
+		elif btn == JOY_BUTTON_X or btn == JOY_BUTTON_B:
+			_seat_action("pad", dev, "shove")
 
 
 func _process(delta: float) -> void:
-	if not frozen:
-		_step(minf(delta, 0.05))
+	if frozen:
+		return
+	if paused:
+		_update_hud()
+		return
+	_step(minf(delta, 0.05))
 
 
 func _capture() -> void:
@@ -764,7 +816,7 @@ func make_bean(i: int, pos: Vector3) -> Dictionary:
 		"idx": i, "phase": randf() * TAU, "vy": 0.0, "ground": true, "knock": Vector3.ZERO, "target": pos,
 		"ai_t": 0.0, "out": 0.0, "flat": 0.0, "deaths": 0, "score": 0, "moving": false, "scared": false,
 		"flee": true, "decided": false, "hit_cd": 0.0, "speed": 3.3, "dead_mode": "", "dead_t": 0.0, "last_tile": -1,
-		"react": 0.0, "outside_t": 0.0, "doom": -1.0, "first_death": 999.0, "home_x": -1.5, "lane_z": pos.z, "off": Vector2.ZERO,
+		"react": 0.0, "outside_t": 0.0, "doom": -1.0, "first_death": 999.0, "stun": 0.0, "shove_cd": 0.0, "shove_t": 0.0, "home_x": -1.5, "lane_z": pos.z, "off": Vector2.ZERO,
 	}
 	_build_bean_nodes(b, pos)
 	beans.append(b)
@@ -968,6 +1020,14 @@ func kill(b: Dictionary, mode: String, dir := Vector3.ZERO, count := true) -> vo
 			for k in 22:
 				var a4 := randf() * TAU
 				_drop(mid + Vector3(0, randf_range(-0.5, 0.6), 0), Vector3(cos(a4), 0, sin(a4)) * randf_range(1.0, 4.5) + Vector3(0, randf_range(1.0, 5.0), 0), spark_mat, false)
+	match mode:
+		"fry": sfx("zap", -3.0)
+		"burst": sfx("boom", 0.0)
+		"crush":
+			sfx("slam", 0.0)
+			sfx("splat", -2.0)
+		_: sfx("splat", 0.0)
+	sfx("stamp", -8.0)
 	stamp_t = 1.3
 	flash = 1.0
 	shake = 1.0
@@ -1090,24 +1150,15 @@ func load_door(d: int, intro: bool) -> void:
 	hud_sub.get_parent().visible = false
 	_set_state(ST_INTRO if intro else ST_PLAY)
 
-func _rank(metric: Array) -> Array:
-	# xếp hạng kiểu thi đấu: đồng hạng thì cùng thứ hạng (1, 1, 3, 4). metric nhỏ hơn là tốt hơn.
-	var ranks := [1, 1, 1, 1]
-	for i in 4:
-		for j in 4:
-			if float(metric[j]) < float(metric[i]):
-				ranks[i] += 1
-	return ranks
-
 func _end_round() -> void:
 	var metric := []
 	for b in beans:
 		# ít lần chết hơn thì xếp trên; bằng nhau thì ai chết lần đầu muộn hơn xếp trên
-		metric.append(-float(b.score) if level == 4 else float(b.deaths) * 1000.0 - minf(float(b.first_death), ROUND_TIME + 1.0))
-	var ranks := _rank(metric)
+		metric.append(Scoring.tiles_metric(int(b.score)) if level == 4 else Scoring.survival_metric(int(b.deaths), float(b.first_death), ROUND_TIME))
+	var ranks := Scoring.rank(metric)
 	last_rows.clear()
 	for i in 4:
-		var pts: int = POINTS[int(ranks[i]) - 1]
+		var pts: int = Scoring.points_for_rank(int(ranks[i]))
 		totals[i] += pts
 		total_deaths[i] += int(beans[i].deaths)
 		var detail := ("%d Ô" % int(beans[i].score)) if level == 4 else ("CHẾT %d LẦN" % int(beans[i].deaths))
@@ -1128,8 +1179,8 @@ func _enter_final() -> void:
 	_set_state(ST_FINAL)
 	var metric := []
 	for i in 4:
-		metric.append(-float(totals[i]) * 1000.0 + float(total_deaths[i]))   # bằng điểm thì ai chết ít hơn xếp trên
-	var ranks := _rank(metric)
+		metric.append(Scoring.final_metric(int(totals[i]), int(total_deaths[i])))
+	var ranks := Scoring.rank(metric)
 	last_rows.clear()
 	var best := 0
 	var kth := 0
@@ -1249,6 +1300,7 @@ func _update_press(_dt: float) -> void:
 	if press_stage == 2 and pp >= 2.74:
 		press_stage = 3
 		shake = 1.0
+		sfx("slam", -2.0)
 		for b in beans:
 			if b.flat > 0.0 and b.out <= 0.0:
 				kill(b, "crush")
@@ -1498,6 +1550,8 @@ func _update_core(dt: float) -> void:
 	core.visible = true
 	core_phase += lerpf(5.0, 34.0, 1.0 - core_timer / 10.0) * dt
 	var pulse := 1.0 if sin(core_phase) > 0.2 else 0.0
+	if pulse > 0.5 and core_mat.emission_energy_multiplier < 1.0:
+		sfx("beep", -9.0)
 	core.position = hp + Vector3(0, 2.28 * BEAN_SCALE, 0)
 	core.rotation.y = (h.root as Node3D).rotation.y
 	core_mat.emission_energy_multiplier = 0.4 + 6.0 * pulse
@@ -1567,15 +1621,161 @@ func _update_paint(_dt: float) -> void:
 # =====================================================================
 #  ĐIỀU KHIỂN + VẬT LÝ ĐƠN GIẢN
 # =====================================================================
-func _input_dir() -> Vector3:
+func _press_pause() -> void:
+	if state == ST_LOBBY:
+		get_tree().quit()
+	elif state != ST_FINAL:
+		paused = not paused
+
+func _seat_of(kind: String, dev: int) -> int:
+	for i in seats.size():
+		if seats[i].kind == kind and int(seats[i].dev) == dev:
+			return i
+	return -1
+
+func _toggle_seat(kind: String, dev: int) -> void:
+	# ở sảnh: bấm để vào ghế trống đầu tiên, bấm lần nữa để rời ghế (bot ngồi thay)
+	var i := _seat_of(kind, dev)
+	if i >= 0:
+		seats[i] = {"kind": "bot", "dev": 0}
+	else:
+		i = _seat_of("bot", 0)
+		if i < 0:
+			return
+		seats[i] = {"kind": kind, "dev": dev}
+	sfx("beep", -6.0)
+
+func _seat_action(kind: String, dev: int, action: String) -> void:
+	var i := _seat_of(kind, dev)
+	if i >= 0:
+		if action == "jump":
+			jump_reqs[i] = true
+		else:
+			shove_reqs[i] = true
+
+func _seat_label(i: int) -> String:
+	match seats[i].kind:
+		"kb1": return "BÀN PHÍM 1  (WASD · SPACE · F)"
+		"kb2": return "BÀN PHÍM 2  (MŨI TÊN · DẤU CHẤM · DẤU /)"
+		"pad": return "TAY CẦM %d  (A NHẢY · X ĐẨY)" % (int(seats[i].dev) + 1)
+	return "MÁY ĐIỀU KHIỂN"
+
+func _seat_dir(i: int) -> Vector3:
 	var d := Vector3.ZERO
-	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT): d.x -= 1.0
-	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT): d.x += 1.0
-	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP): d.z -= 1.0
-	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN): d.z += 1.0
-	if d != Vector3.ZERO:
-		idle_time = 0.0
-	return d.normalized()
+	match seats[i].kind:
+		"kb1":
+			if Input.is_key_pressed(KEY_A): d.x -= 1.0
+			if Input.is_key_pressed(KEY_D): d.x += 1.0
+			if Input.is_key_pressed(KEY_W): d.z -= 1.0
+			if Input.is_key_pressed(KEY_S): d.z += 1.0
+		"kb2":
+			if Input.is_key_pressed(KEY_LEFT): d.x -= 1.0
+			if Input.is_key_pressed(KEY_RIGHT): d.x += 1.0
+			if Input.is_key_pressed(KEY_UP): d.z -= 1.0
+			if Input.is_key_pressed(KEY_DOWN): d.z += 1.0
+		"pad":
+			var dev: int = seats[i].dev
+			var ax := Vector2(Input.get_joy_axis(dev, JOY_AXIS_LEFT_X), Input.get_joy_axis(dev, JOY_AXIS_LEFT_Y))
+			if ax.length() > 0.25:
+				d = Vector3(ax.x, 0, ax.y)
+			if Input.is_joy_button_pressed(dev, JOY_BUTTON_DPAD_LEFT): d.x -= 1.0
+			if Input.is_joy_button_pressed(dev, JOY_BUTTON_DPAD_RIGHT): d.x += 1.0
+			if Input.is_joy_button_pressed(dev, JOY_BUTTON_DPAD_UP): d.z -= 1.0
+			if Input.is_joy_button_pressed(dev, JOY_BUTTON_DPAD_DOWN): d.z += 1.0
+	# camera đặt ở góc phòng nên xoay hướng điều khiển cho khớp với màn hình
+	return d.limit_length(1.0).rotated(Vector3.UP, cam_yaw)
+
+# ---------- Âm thanh ----------
+func _build_audio() -> void:
+	for n in ["slam", "splat", "zap", "boom", "beep", "buzzer", "buzzer_end", "shove", "stamp", "hum"]:
+		var st := load("res://audio/%s.wav" % n)
+		if st:
+			sounds[n] = st
+	for i in 10:
+		var p := AudioStreamPlayer.new()
+		add_child(p)
+		players.append(p)
+	if sounds.has("hum"):
+		var hum: AudioStreamWAV = sounds["hum"]
+		hum.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		hum.loop_end = int(hum.get_length() * hum.mix_rate)
+		var hp := AudioStreamPlayer.new()
+		hp.stream = hum
+		hp.volume_db = -14.0
+		add_child(hp)
+		hp.play()
+
+func sfx(name: String, vol_db := 0.0, pitch := 1.0) -> void:
+	if muted or not sounds.has(name):
+		return
+	var p: AudioStreamPlayer = players[next_player]
+	next_player = (next_player + 1) % players.size()
+	p.stream = sounds[name]
+	p.volume_db = vol_db
+	p.pitch_scale = pitch * randf_range(0.94, 1.06)
+	p.play()
+
+# ---------- Sảnh chờ ----------
+func load_lobby() -> void:
+	level = -1
+	door = 0
+	if level_root:
+		remove_child(level_root)
+		level_root.queue_free()
+	level_root = Node3D.new()
+	add_child(level_root)
+	beans.clear()
+	gibs.clear()
+	corpses.clear()
+	decal_n = 0
+	core = null
+	lt = 0.0
+	totals = [0, 0, 0, 0]
+	total_deaths = [0, 0, 0, 0]
+	seed(1)
+	_build_platform(PLATFORM_R)
+	for i in 4:
+		var b := make_bean(i, Vector3(-1.65 + 1.1 * i, PLATFORM_TOP, 0.5 - 0.35 * i))
+		(b.root as Node3D).rotation.y = cam_yaw
+	cam_base = Vector3(5.2, 4.95, 5.7)
+	cam_look = Vector3(-0.6, 0.5, -0.5)
+	cam.position = cam_base
+	cam.look_at(cam_look)
+	hud_title.text = "STRESS TEST"
+	hud_rule.text = "10 cửa. Chết ít nhất thì thắng."
+	hud_sub.get_parent().visible = false
+	speak_t = 0.0
+	_set_state(ST_LOBBY)
+
+func _do_shove(b: Dictionary) -> void:
+	# đẩy người đứng trước mặt: văng ra khoảng 2 mét, khựng lại một nhịp
+	var root: Node3D = b.root
+	var fwd := Vector3(sin(root.rotation.y), 0, cos(root.rotation.y))
+	b.shove_cd = 1.3
+	b.shove_t = 0.25
+	sfx("shove", -4.0)
+	for o in beans:
+		if o.idx == b.idx or o.out > 0.0:
+			continue
+		var dv: Vector3 = (o.root as Node3D).position - root.position
+		dv.y = 0.0
+		if dv.length() < 1.35 and dv.length() > 0.01 and fwd.dot(dv.normalized()) > 0.25:
+			o.knock = dv.normalized() * 8.0
+			o.stun = 0.3
+
+func _bot_wants_shove(b: Dictionary, dt: float) -> bool:
+	if b.shove_cd > 0.0:
+		return false
+	var root: Node3D = b.root
+	var fwd := Vector3(sin(root.rotation.y), 0, cos(root.rotation.y))
+	for o in beans:
+		if o.idx == b.idx or o.out > 0.0:
+			continue
+		var dv: Vector3 = (o.root as Node3D).position - root.position
+		dv.y = 0.0
+		if dv.length() < 1.1 and dv.length() > 0.01 and fwd.dot(dv.normalized()) > 0.4:
+			return randf() < 0.9 * dt
+	return false
 
 
 func _set_target(b: Dictionary, q: Vector2, hold: float) -> void:
@@ -1845,6 +2045,7 @@ func _respawn(b: Dictionary) -> void:
 
 func _update_bean(b: Dictionary, dt: float) -> void:
 	var root: Node3D = b.root
+	var i: int = b.idx
 	if b.out > 0.0:
 		b.out -= dt
 		b.dead_t += dt
@@ -1870,21 +2071,30 @@ func _update_bean(b: Dictionary, dt: float) -> void:
 		b.ground = true
 		b.moving = false
 		return
+	b.shove_cd = maxf(0.0, float(b.shove_cd) - dt)
+	b.shove_t = maxf(0.0, float(b.shove_t) - dt)
 	var d := Vector3.ZERO
-	var human: bool = false
-	if b.idx == 0:
-		var inp := _input_dir()
-		human = idle_time < 3.0
-		if human:
-			d = inp
-			if jump_req and b.ground:
-				b.vy = JUMP_V
-	if not human:
+	var human: bool = seats[i].kind != "bot"
+	var want_shove := false
+	if human:
+		d = _seat_dir(i)
+		if jump_reqs[i] and b.ground:
+			b.vy = JUMP_V
+		want_shove = shove_reqs[i]
+	else:
 		d = _ai_dir(b, dt)
+		want_shove = _bot_wants_shove(b, dt)
+	if want_shove and b.shove_cd <= 0.0 and b.ground and b.flat <= 0.0:
+		_do_shove(b)
 	if b.flat > 0.0:
 		b.flat -= dt
 		d = Vector3.ZERO
-	p += d * float(b.speed) * dt
+	if b.stun > 0.0:
+		b.stun = float(b.stun) - dt
+		d = Vector3.ZERO
+	var kn: Vector3 = b.knock
+	p += d * float(b.speed) * dt + kn * dt
+	b.knock = kn.move_toward(Vector3.ZERO, 16.0 * dt)
 	if level == 5 and b.ground:
 		p.x += belt_v * dt
 	p = _constrain(b, p)
@@ -1903,8 +2113,8 @@ func _update_bean(b: Dictionary, dt: float) -> void:
 	b.moving = d.length() > 0.1
 	if b.moving:
 		var face := d
-		if level == 5:
-			face = Vector3(-1, 0, d.z * 0.6)   # luôn quay mặt ngược chiều băng chuyền
+		if level == 5 and not human:
+			face = Vector3(-1, 0, d.z * 0.6)   # bot luôn quay mặt ngược chiều băng chuyền
 		root.rotation.y = lerp_angle(root.rotation.y, atan2(face.x, face.z), 1.0 - exp(-12.0 * dt))
 	if level == 1 and p.y < 0.85:
 		kill(b, "grind")
@@ -1984,7 +2194,10 @@ func _bean_visual(b: Dictionary) -> void:
 		sl = -sw * 0.7
 		sr = sw * 0.7
 		upper.rotation.x = 0.16
-	if b.out <= 0.0 and b.scared:
+	if b.out <= 0.0 and b.shove_t > 0.0:
+		sl = -1.5
+		sr = -1.5
+	elif b.out <= 0.0 and b.scared:
 		sl = -2.75 + (_hash1(tq * 7.0 + ph) - 0.5) * 0.3
 		sr = -2.75 + (_hash1(tq * 9.0 + ph) - 0.5) * 0.3
 		arm_z = 0.25
@@ -2007,7 +2220,6 @@ func _bean_visual(b: Dictionary) -> void:
 # =====================================================================
 func _step(dt: float) -> void:
 	t += dt
-	idle_time += dt
 	state_t += dt
 	fan.rotation.y += dt * 1.6
 	beacon.rotation.y += dt * 2.4
@@ -2028,6 +2240,10 @@ func _step(dt: float) -> void:
 		ST_INTRO:
 			if state_t >= 2.6:
 				_set_state(ST_PLAY)
+				sfx("buzzer", -5.0)
+		ST_LOBBY:
+			for b in beans:
+				b.scared = seats[b.idx].kind != "bot"   # người đã vào ghế thì giơ tay
 		ST_PLAY:
 			lt += dt
 			match level:
@@ -2054,8 +2270,10 @@ func _step(dt: float) -> void:
 		_bean_visual(b)
 	_update_fx()
 	_update_hud()
-	jump_req = false
+	jump_reqs = [false, false, false, false]
+	shove_reqs = [false, false, false, false]
 	if state == ST_PLAY and lt >= ROUND_TIME:
+		sfx("buzzer_end", -4.0)
 		_end_round()
 	elif state == ST_RESULT and state_t >= 6.0:
 		if door >= 9:
@@ -2080,7 +2298,10 @@ func _update_fx() -> void:
 	hud_sub.get_parent().visible = speak_t > 0.0
 	if monitor_t <= 0.0:
 		var cur := "_" if fmod(t, 1.0) < 0.5 else " "
-		monitor.text = "CỬA %d/10\n%s%s" % [door + 1, LEVEL_NAMES[level], cur]
+		if state == ST_LOBBY:
+			monitor.text = "STRESS TEST\nCHỜ ĐỐI TƯỢNG%s" % cur
+		else:
+			monitor.text = "CỬA %d/10\n%s%s" % [door + 1, LEVEL_NAMES[level], cur]
 		monitor.modulate = C_AMBER
 	else:
 		monitor.visible = fmod(monitor_t, 0.5) > 0.12
@@ -2120,7 +2341,7 @@ func _build_post_and_ui() -> void:
 	add_child(ui)
 	hud_title = _mk_label(ui, "", 17, C_AMBER, Vector2(14, 6))
 	hud_rule = _mk_label(ui, "", 12, Color(0.80, 0.78, 0.70, 0.8), Vector2(14, 30), 3)
-	_mk_label(ui, "WASD: ĐI   SPACE: NHẢY   N: QUA CỬA   1-0: CHỌN CỬA", 10, Color(0.80, 0.78, 0.70, 0.45), Vector2(560, 8), 3)
+	_mk_label(ui, "ESC: TẠM DỪNG", 10, Color(0.80, 0.78, 0.70, 0.45), Vector2(716, 8), 3)
 	hud_timer = _mk_label(ui, "0:30", 28, C_AMBER, Vector2(372, 2), 6)
 
 	var sub_panel := Panel.new()
@@ -2150,11 +2371,11 @@ func _build_post_and_ui() -> void:
 		chip.color = SUIT[i].lightened(0.15)
 		chip.size = Vector2(6, 42)
 		card.add_child(chip)
-		_mk_label(card, "ĐT-%s" % SUBJ[i], 14, C_PAPER, Vector2(13, 0), 0)
-		var val := _mk_label(card, "", 13, C_AMBER, Vector2(64, 1), 0)
+		var nm := _mk_label(card, "ĐT-%s" % SUBJ[i], 13, C_PAPER, Vector2(13, 1), 0)
+		var val := _mk_label(card, "", 13, C_AMBER, Vector2(84, 1), 0)
 		var pts := _mk_label(card, "", 13, C_PAPER, Vector2(13, 21), 0)
 		var dth := _mk_label(card, "", 13, Color(0.9, 0.3, 0.25), Vector2(70, 21), 0)
-		hud_cards.append({"val": val, "pts": pts, "dth": dth})
+		hud_cards.append({"val": val, "pts": pts, "dth": dth, "name": nm})
 
 	# chữ giới thiệu cửa
 	intro_big = _mk_label(ui, "", 54, C_AMBER, Vector2(0, 150), 10)
@@ -2201,6 +2422,36 @@ func _build_post_and_ui() -> void:
 	ov_foot.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ov_panel.visible = false
 
+	# sảnh chờ: danh sách ghế
+	lobby_panel = Panel.new()
+	var sbl := StyleBoxFlat.new()
+	sbl.bg_color = Color(0.02, 0.02, 0.015, 0.88)
+	sbl.border_color = C_AMBER
+	sbl.set_border_width_all(2)
+	lobby_panel.add_theme_stylebox_override("panel", sbl)
+	lobby_panel.position = Vector2(170, 238)
+	lobby_panel.size = Vector2(460, 158)
+	ui.add_child(lobby_panel)
+	for r in 4:
+		var chip3 := ColorRect.new()
+		chip3.color = SUIT[r].lightened(0.15)
+		chip3.position = Vector2(16, 11 + r * 26)
+		chip3.size = Vector2(8, 22)
+		lobby_panel.add_child(chip3)
+		_mk_label(lobby_panel, "ĐT-%s" % SUBJ[r], 17, C_PAPER, Vector2(34, 7 + r * 26), 0)
+		lobby_rows.append(_mk_label(lobby_panel, "", 15, C_AMBER, Vector2(110, 9 + r * 26), 0))
+	var hint := _mk_label(lobby_panel, "VÀO / RỜI GHẾ:  SPACE (BÀN PHÍM 1)  ·  DẤU CHẤM (BÀN PHÍM 2)  ·  NÚT A (TAY CẦM)", 11, Color(0.80, 0.78, 0.70, 0.8), Vector2(0, 114), 0)
+	hint.size = Vector2(460, 16)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var hint2 := _mk_label(lobby_panel, "ENTER / START: BẮT ĐẦU      ESC: THOÁT", 14, C_AMBER, Vector2(0, 132), 0)
+	hint2.size = Vector2(460, 20)
+	hint2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lobby_panel.visible = false
+	pause_label = _mk_label(ui, "TẠM DỪNG\nESC: CHƠI TIẾP      Q: VỀ SẢNH", 30, C_AMBER, Vector2(0, 170), 10)
+	pause_label.size = Vector2(800, 90)
+	pause_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pause_label.visible = false
+
 	stamp = Label.new()
 	stamp.text = "ĐÃ LOẠI BỎ"
 	stamp.add_theme_font_override("font", font)
@@ -2229,18 +2480,35 @@ func _update_hud() -> void:
 		var card: Dictionary = hud_cards[i]
 		var v: Label = card.val
 		if b.out > 0.0:
-			v.text = "ĐÃ CHẾT"
+			v.text = "CHẾT"
 			v.add_theme_color_override("font_color", Color(1.0, 0.15, 0.1))
 		else:
 			v.text = "SỐNG"
 			v.add_theme_color_override("font_color", C_AMBER)
 		(card.pts as Label).text = "%d ĐIỂM" % int(totals[i])
 		(card.dth as Label).text = ("%d Ô" % int(b.score)) if level == 4 else ("CHẾT %d" % int(b.deaths))
+		(card.name as Label).text = "ĐT-%s%s" % [SUBJ[i], "" if seats[i].kind != "bot" else "  BOT"]
+	pause_label.visible = paused
+	# sảnh chờ
+	var lobby := state == ST_LOBBY
+	lobby_panel.visible = lobby
+	hud_timer.visible = not lobby
+	if lobby:
+		for r in 4:
+			lobby_rows[r].text = _seat_label(r)
+			lobby_rows[r].add_theme_color_override("font_color", C_AMBER if seats[r].kind != "bot" else Color(0.55, 0.53, 0.47))
 	# giới thiệu cửa
 	var intro := state == ST_INTRO
-	intro_big.visible = intro
-	intro_small.visible = intro
-	if intro:
+	intro_big.visible = intro or lobby
+	intro_small.visible = intro or lobby
+	if lobby:
+		intro_big.text = "STRESS TEST"
+		intro_small.text = "10 CỬA  ·  CHẾT ÍT NHẤT THÌ THẮNG"
+		intro_big.position.y = 44
+		intro_small.position.y = 118
+	elif intro:
+		intro_big.position.y = 150
+		intro_small.position.y = 228
 		intro_big.text = "CỬA %d/10  ·  %s" % [door + 1, LEVEL_NAMES[level]]
 		intro_small.text = LEVEL_RULES[level]
 	# bảng chấm điểm sau mỗi cửa và bảng tổng kết
@@ -2250,7 +2518,7 @@ func _update_hud() -> void:
 	if show:
 		var fin := state == ST_FINAL
 		ov_title.text = "TỔNG KẾT 10 CỬA" if fin else ("KẾT QUẢ CỬA %d/10  ·  %s" % [door + 1, LEVEL_NAMES[level]])
-		ov_foot.text = "ENTER: CHƠI LẠI TỪ CỬA 1" if fin else ("HẠNG 1-4: +4 +3 +2 +1   ·   BẰNG SỐ LẦN CHẾT THÌ XÉT AI CHẾT LẦN ĐẦU MUỘN HƠN")
+		ov_foot.text = "ENTER / START: VỀ SẢNH" if fin else ("HẠNG 1-4: +4 +3 +2 +1   ·   BẰNG SỐ LẦN CHẾT THÌ XÉT AI CHẾT LẦN ĐẦU MUỘN HƠN")
 		for r in last_rows.size():
 			var row: Dictionary = last_rows[r]
 			var w: Dictionary = ov_rows[r]
@@ -2452,6 +2720,7 @@ func _update_elec(dt: float) -> void:
 				elec_phase = 2
 				elec_t = 0.7
 				shake = 0.4
+				sfx("zap", -8.0, 1.2)
 		2:
 			for e in elec:
 				var m2: ShaderMaterial = e.mat
@@ -2638,6 +2907,7 @@ func _update_weights(dt: float) -> void:
 					w.state = 3
 					w.timer = 0.55
 					shake = maxf(shake, 0.6)
+					sfx("slam", -4.0, 1.15)
 					(w.ring as Node3D).visible = false
 					for b in beans:
 						if b.out > 0.0:

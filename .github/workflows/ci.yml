@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      GODOT_VERSION: 4.4.1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tải Godot
+        run: |
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
+          rm godot.zip
+
+      - name: Import tài nguyên
+        run: godot --headless --path . --import
+
+      - name: Kiểm tra cú pháp
+        run: |
+          godot --headless --path . --check-only --script res://main.gd 2>&1 | tee parse.log
+          ! grep -q "SCRIPT ERROR" parse.log
+
+      - name: Kiểm thử tính điểm
+        run: godot --headless --path . --script res://tests/test_scoring.gd
+
+      - name: Chạy thử cả trận 10 cửa (bot)
+        run: |
+          godot --headless --path . -- --shot=/tmp/none.png --match --phase=400 2>&1 | tee match.log
+          ! grep -q "SCRIPT ERROR" match.log
+          grep -q "RESULT door=10" match.log

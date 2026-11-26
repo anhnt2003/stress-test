@@ -3,19 +3,34 @@
 Party game 3D kinh dị cho 3–4 người: 10 cửa, chấm điểm sau mỗi cửa, chốt điểm từng người cuối trận.
 Engine: Godot 4.4 (GDScript). Trạng thái hiện tại: bản mẫu một file `main.gd` (~2.800 dòng), 1 người + 3 bot.
 
+## Tiến độ
+
+| Giai đoạn | Trạng thái |
+|---|---|
+| 0 — Repo và CI | Xong: workflow kiểm tra cú pháp, kiểm thử tính điểm, chạy thử cả trận bằng bot |
+| 1 — Tách kiến trúc | Mới một phần: `scoring.gd` đã tách và có kiểm thử. `main.gd` vẫn là một file lớn |
+| 2 — Chơi chung một máy | Xong phần chính: sảnh, 2 bàn phím + tay cầm, bot ngồi ghế trống, tạm dừng, về sảnh. Chưa có chọn mũ/màu |
+| 3 — Vật lý và tương tác | Mới một phần: đã có đẩy nhau (người và bot). Chưa có physics engine, ragdoll, nút "chơi xấu" theo cửa |
+| 4 — Chơi qua mạng | Chưa làm |
+| 5 — Hình ảnh và âm thanh | Mới một phần: 10 hiệu ứng âm thanh tổng hợp + tiếng nền. Chưa có nhạc, model, bake ánh sáng |
+| 6 — Đóng gói | Chưa làm |
+
+Chưa kiểm chứng bằng người thật: điều khiển bàn phím/tay cầm, âm thanh, và cảm giác khi đẩy nhau
+mới được kiểm tra bằng mô phỏng bot và ảnh chụp.
+
 ## Hiện có gì
 
 - 10 cửa chạy nối tiếp, mỗi cửa 30 giây, có màn mở đầu, bảng kết quả, bảng tổng kết.
 - Tính điểm: hạng theo số lần chết (+4/+3/+2/+1), hoà thì xét lần chết đầu muộn hơn.
+- Sảnh chờ cho tối đa 4 người trên một máy; bot ngồi ghế trống.
+- Đẩy nhau, tạm dừng, âm thanh cơ bản.
 - Hình ảnh: buồng bê tông, shader texel bẩn, hậu kỳ sepia + dither, hệ máu và mảnh vụn.
-- Bot đơn giản cho từng cửa. Va chạm tự viết, không dùng physics engine.
 
 ## Còn thiếu gì
 
-- Chỉ một người chơi thật. Chưa có nhiều tay cầm, chưa có mạng.
-- Toàn bộ nằm trong một file, cảnh dựng bằng code nên không sửa được trong editor.
-- Chưa có âm thanh, chưa có menu.
-- Model là khối cơ bản. Chưa có tương tác giữa người chơi (húc, đẩy, phá nhau).
+- Chưa có mạng.
+- Phần lớn code vẫn nằm trong một file, cảnh dựng bằng code nên không sửa được trong editor.
+- Model là khối cơ bản. Chưa có nhạc nền, chưa có menu cài đặt.
 
 ## Nguyên tắc
 
