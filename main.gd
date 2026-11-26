@@ -1,6 +1,6 @@
 extends Node3D
-## STRESS TEST — bản mẫu 5 bài thử, tông kinh dị công nghiệp
-## Cảnh dựng hoàn toàn bằng code. Phím 1-5 đổi bài thử, WASD/mũi tên di chuyển đối tượng 01, SPACE nhảy, Esc thoát.
+## STRESS TEST — bản mẫu 10 cửa, tông kinh dị công nghiệp
+## Cảnh dựng hoàn toàn bằng code. WASD/mũi tên di chuyển đối tượng 01, SPACE nhảy, N qua cửa, phím 1-9 và 0 chọn cửa, Esc thoát.
 ## Không bấm gì 3 giây thì máy tự điều khiển đối tượng 01.
 
 # ---------- Bảng màu ----------
