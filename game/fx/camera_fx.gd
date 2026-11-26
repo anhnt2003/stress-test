@@ -1,9 +1,14 @@
 class_name CameraFX
 extends Camera3D
-## Camera góc phòng: rung khi có va đập, loé đỏ khi có người chết, lớp hậu kỳ sepia + dither.
+## Camera chính diện, giữa phòng: rung khi có va đập, loé đỏ khi có người chết, lớp hậu kỳ sepia + dither.
 
-const DEFAULT_BASE := Vector3(5.2, 4.95, 5.7)
-const DEFAULT_LOOK := Vector3(-0.6, 0.5, -0.5)
+## Nhìn thẳng từ phía trước vào màn hình Cỗ Máy trên tường sau, cùng độ cao / khoảng cách / góc cúi như
+## camera góc phòng cũ (sàn chơi vẫn nằm trọn phía trên dải bảng điểm).
+const DEFAULT_BASE := Vector3(0.0, 4.95, 7.7)
+const DEFAULT_LOOK := Vector3(0.0, 0.5, -0.8)
+## Để đủ xa, camera đứng sau tường trước của buồng (mặt ngoài z = 7.0); mặt phẳng cắt gần cắt bỏ bức tường đó
+## (mặt trong quay lưng về camera nên tự bị loại). Mọi thứ trong phòng đều cách camera hơn 3 m.
+const NEAR_CLIP := 2.2
 const RENDER_3D_HEIGHT := 450.0   # số dòng điểm ảnh của cảnh 3D (= window/size/viewport_height)
 
 var base := DEFAULT_BASE
@@ -16,6 +21,7 @@ var shake_scale := 1.0
 
 func _ready() -> void:
 	fov = 54.0
+	near = NEAR_CLIP
 	current = true
 	var post_layer := CanvasLayer.new()
 	post_layer.layer = 1
@@ -47,9 +53,9 @@ static func render_scale(win: Vector2) -> float:
 	return clampf(RENDER_3D_HEIGHT / content_h, 0.25, 1.0)
 
 
-## Hướng nhìn ngang của camera góc phòng (để xoay hướng điều khiển cho khớp màn hình).
+## Hướng nhìn ngang của camera (để xoay hướng điều khiển cho khớp màn hình): 0 = nhìn thẳng về -z.
 static func yaw() -> float:
-	return atan2(5.2 - (-0.6), 5.7 - (-0.5))
+	return atan2(DEFAULT_BASE.x - DEFAULT_LOOK.x, DEFAULT_BASE.z - DEFAULT_LOOK.z)
 
 
 func frame(b: Vector3, l: Vector3) -> void:

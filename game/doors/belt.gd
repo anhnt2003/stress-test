@@ -23,7 +23,7 @@ func _init(match_: MatchManager) -> void:
 	rule = "Chạy ngược băng chuyền, né thùng hàng. Cuối băng là máy huỷ"
 	sabotage_hint = "BĂNG CHUYỀN TĂNG TỐC"
 	keep_corpses = false
-	cam_look = Vector3(-0.2, 0.5, -0.4)
+	cam_look = Vector3(0.0, 0.5, -0.45)
 
 
 func _toothed_roller(pos: Vector3, length: float, radius: float) -> Node3D:

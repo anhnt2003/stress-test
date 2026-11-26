@@ -333,3 +333,17 @@ func run(t) -> void:
 	t.check("3D cửa sổ dọc: theo chiều ngang (có viền đen)", CameraFX.render_scale(Vector2(1600, 2000)), 0.5)
 	t.check("3D màn 4K: không dưới 0.25", CameraFX.render_scale(Vector2(3840, 2160)), 0.25)
 	t.check("3D cửa sổ thu nhỏ hết cỡ", CameraFX.render_scale(Vector2(0, 0)), 1.0)
+	# Camera chính diện: điều khiển không xoay, mọi cửa nhìn thẳng giữa phòng, tường trước (mặt ngoài z = 7.0)
+	# nằm trọn trong mặt phẳng cắt gần ở mọi cửa (không che màn hình)
+	t.check("camera chính diện: hướng điều khiển không xoay", CameraFX.yaw(), 0.0)
+	var mm := MatchManager.new()
+	var half := deg_to_rad(54.0) * 0.5
+	for k in MatchManager.ORDER.size():
+		var dd: DoorBase = MatchManager.ORDER[k].new(mm)
+		var b := dd.cam_base
+		var l := dd.cam_look
+		t.ok("cửa %d: camera ở giữa phòng" % (k + 1), b.x == 0.0 and l.x == 0.0 and b.z > l.z)
+		var pitch := atan2(b.y - l.y, b.z - l.z)
+		var wall_d := (b.z - 7.0) / cos(pitch + half) * cos(half)   # xa nhất (theo trục nhìn) của tường trước trong khung
+		t.ok("cửa %d: tường trước bị cắt (%.2f < %.2f m)" % [k + 1, wall_d, CameraFX.NEAR_CLIP], wall_d < CameraFX.NEAR_CLIP - 0.1)
+	mm.free()

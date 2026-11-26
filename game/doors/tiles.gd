@@ -15,8 +15,8 @@ func _init(match_: MatchManager) -> void:
 	title = "SÀN NGHIỀN"
 	rule = "Tấm sàn bị dẫm hai lần sẽ rơi xuống máy nghiền"
 	sabotage_hint = "LÀM NỨT SÀN QUANH MÌNH"
-	cam_base = Vector3(5.6, 5.0, 6.1)
-	cam_look = Vector3(-0.7, 0.9, -0.6)
+	cam_base = Vector3(0.0, 5.0, 8.3)   # lùi xa hơn một chút: sân rộng
+	cam_look = Vector3(0.0, 0.9, -0.9)
 
 
 func tile_half() -> float:

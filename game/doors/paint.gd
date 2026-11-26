@@ -16,8 +16,8 @@ func _init(match_: MatchManager) -> void:
 	rule = "Chiếm nhiều ô nhất. Ai không đứng đầu thì nổ vòng cổ"
 	sabotage_hint = "CƯỚP 3×3 Ô QUANH MÌNH"
 	scores_tiles = true
-	cam_base = Vector3(5.6, 5.0, 6.1)
-	cam_look = Vector3(-0.7, 0.3, -0.6)
+	cam_base = Vector3(0.0, 5.0, 8.3)   # lùi xa hơn một chút: sân rộng
+	cam_look = Vector3(0.0, 0.3, -0.9)
 
 
 func setup(level_root: Node3D) -> void:

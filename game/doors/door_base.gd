@@ -20,8 +20,8 @@ var separation := 0.6
 var keep_corpses := true
 ## Cửa xếp hạng theo số ô chiếm được thay vì số lần chết.
 var scores_tiles := false
-var cam_base := Vector3(5.2, 4.95, 5.7)
-var cam_look := Vector3(-0.6, 0.5, -0.5)
+var cam_base := CameraFX.DEFAULT_BASE
+var cam_look := CameraFX.DEFAULT_LOOK
 ## Mô tả nút chơi xấu của cửa này (hiện ở HUD).
 var sabotage_hint := ""
 

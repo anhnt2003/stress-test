@@ -20,8 +20,8 @@ func _init(match_: MatchManager) -> void:
 	title = "SÀN ĐIỆN"
 	rule = "Ô nháy vàng sắp phóng điện. Chạy sang ô an toàn hoặc nhảy đúng lúc"
 	sabotage_hint = "PHÓNG ĐIỆN DƯỚI CHÂN ĐỐI THỦ"
-	cam_base = Vector3(5.6, 5.0, 6.1)
-	cam_look = Vector3(-0.7, 0.3, -0.6)
+	cam_base = Vector3(0.0, 5.0, 8.3)   # lùi xa hơn một chút: sân rộng
+	cam_look = Vector3(0.0, 0.3, -0.9)
 
 
 func elec_center(ix: int, iz: int) -> Vector3:
